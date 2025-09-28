@@ -1,5 +1,6 @@
 [BITS 16]
-[ORG 0x7C00]
+
+%define SECTORS_N KERNEL_SIZE / 512 + 1
 
 START_SECTOR  equ   2
 SECTORS_N     equ   KERNEL_SIZE / 512 + 1
@@ -83,19 +84,71 @@ print:
   .end:
     ret
 
-
 print_read_err:
   mov bx, read_error_msg
   call print
-  jmp inf_loop
+err_loop:
+  jmp err_loop
 
 read_complete:
   mov bx, read_complete_msg
   call print
 
+; 32 bit mode
+lgdt [gdt_descriptor]
+cld
+
+mov eax, cr0
+or eax, 1
+mov cr0, eax
+
+jmp CODE_SEG:next
+
+[BITS 32]
+next:
+  mov eax, DATA_SEG
+  mov ds, eax
+  mov ss, eax
+  mov es, eax
+  mov fs, eax
+  mov gs, eax
+
+extern kernel_entry
+call kernel_entry
+
+[BITS 32]
+[GLOBAL inf_loop]
 inf_loop:
   jmp inf_loop
 
+[BITS 16]
+gdt_descriptor:
+  dw 0x17
+  dd gdt
+
+align 8
+gdt:
+  .null:                dq 0
+  csd:
+    .limitLo:           dw 0xFF
+    .baseLo:            dw 0
+    .baseMid:           db 0
+    .P_DPL_S_type:      db 0b1001_1010
+    .G_B_0_AVL_limitHi: db 0b1100_1111
+    .baseHi:            db 0
+
+  dsd:
+    .limitLo:           dw 0xFF
+    .baseLo:            dw 0
+    .baseMid:           db 0
+    .P_DPL_S_type:      db 0b1001_0010
+    .G_B_0_AVL_limitHi: db 0b1100_1111
+    .baseHi:            db 0
+
+CODE_SEG equ 0x8
+DATA_SEG equ 0x10
+
+[BITS 16]
 read_error_msg:    db "[FAILED] Read error -x-", 0x0A, 0x0D
 read_complete_msg: db "[  OK  ] Reading kernel completed successfully -w-"
 
