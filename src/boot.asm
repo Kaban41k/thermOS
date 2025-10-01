@@ -1,7 +1,10 @@
 [BITS 16]
 [ORG 0x7C00]
 
-%define SECTORS_N KERNEL_SIZE / 512 + 1
+%define SECTORS_N     KERNEL_SIZE / 512 + 1
+%define MAX_SECTORS   18
+%define MAX_HEADS     1
+%define MAX_CYLINDERS 79
 
 cli
 
@@ -25,30 +28,30 @@ mov si, SECTORS_N
 
 read_sectors:
   ;call BIOS
-  mov ah, 0x2       ; read sectors
-  int 0x13          ; disc service interrupt
-  jc print_read_err ; error check
+  mov ah, 0x2         ; read sectors
+  int 0x13            ; disc service interrupt
+  jc print_read_err   ; error check
 
   ; done check
   dec si
   jz read_complete
 
   ; next sector
-  add di, 0x20    ; next sector of data destination
+  add di, 0x20          ; next sector of data destination
   mov es, di
   
-  inc cl          ; next sector of read
-  cmp cl, 18      ; check head change 
+  inc cl                ; next sector of read
+  cmp cl, MAX_SECTORS   ; check head change 
   jle read_sectors
   mov cl, 1
 
-  inc dh          ; next head of read
-  cmp dh, 1       ; check cylinder change
+  inc dh                ; next head of read
+  cmp dh, MAX_HEADS     ; check cylinder change
   jle read_sectors
   xor dh, dh
 
-  inc ch          ; next cylinder
-  cmp ch, 79      ; overflow check
+  inc ch                ; next cylinder
+  cmp ch, MAX_CYLINDERS ; overflow check
   jle read_sectors
 
 print_read_overflow:
@@ -80,9 +83,9 @@ read_complete:
 inf_loop:
   jmp inf_loop
 
-read_error_msg: db "[X] Read error -x-", 0x0A, 0x0D
-read_overflow_msg: db "[X] READ OVERFLOW 0o0", 0x0A, 0x0D
-read_complete_msg: db "[OK] Reading kernel completed successfully -w-"
+read_error_msg:    db "[FAILED] Read error -x-", 0x0A, 0x0D
+read_overflow_msg: db "[FAILED] READ OVERFLOW 0o0", 0x0A, 0x0D
+read_complete_msg: db "[  OK  ] Reading kernel completed successfully -w-"
 
 times 510-($-$$) db 0
 dw 0xAA55
