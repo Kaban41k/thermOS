@@ -1,6 +1,19 @@
 [BITS 16]
 
-%define SECTORS_N KERNEL_SIZE / 512 + 1
+START_SECTOR  equ   2
+SECTORS_N     equ   KERNEL_SIZE / 512 + 1
+MAX_SECTORS   equ   18
+MAX_HEADS     equ   1
+MAX_CYLINDERS equ   79
+
+%macro READ_OVERFLOW_CHECK 0
+  %if ((START_SECTOR + SECTORS_N) / 18) > MAX_CYLINDERS 
+    %error "--- READ OVERFLOW --- 0o0"
+  %endif
+%endmacro
+
+
+READ_OVERFLOW_CHECK
 
 START_SECTOR  equ   2
 SECTORS_N     equ   KERNEL_SIZE / 512 + 1
@@ -102,11 +115,11 @@ mov eax, cr0
 or eax, 1
 mov cr0, eax
 
-jmp CODE_SEG:next
+jmp 0x8:next
 
 [BITS 32]
 next:
-  mov eax, DATA_SEG
+  mov eax, 0x10
   mov ds, eax
   mov ss, eax
   mov es, eax
@@ -121,7 +134,6 @@ call kernel_entry
 inf_loop:
   jmp inf_loop
 
-[BITS 16]
 gdt_descriptor:
   dw 0x17
   dd gdt
@@ -145,10 +157,6 @@ gdt:
     .G_B_0_AVL_limitHi: db 0b1100_1111
     .baseHi:            db 0
 
-CODE_SEG equ 0x8
-DATA_SEG equ 0x10
-
-[BITS 16]
 read_error_msg:    db "[FAILED] Read error -x-", 0x0A, 0x0D
 read_complete_msg: db "[  OK  ] Reading kernel completed successfully -w-"
 
