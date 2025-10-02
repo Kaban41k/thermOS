@@ -2,7 +2,7 @@
 # Variables
 
 # Build tools
-KERNEL_SIZE = 2048
+KERNEL_SIZE = 16384
 NASM = nasm -f bin -dKERNEL_SIZE=$(KERNEL_SIZE)
 
 
@@ -31,7 +31,7 @@ test: build
 
 result: test
 	hexdump -C foo
-	hexdump -C -s 0x200 -n 1024 boot.img
+	hexdump -C -s 0x200 -n $(KERNEL_SIZE) boot.img
 
 debug: build
 	qemu-system-i386 -cpu pentium2 -m 1g -fda boot.img -monitor stdio -device VGA -display gtk -s -S &

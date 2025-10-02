@@ -1,10 +1,20 @@
 [BITS 16]
 [ORG 0x7C00]
 
-%define SECTORS_N     KERNEL_SIZE / 512 + 1
-%define MAX_SECTORS   18
-%define MAX_HEADS     1
-%define MAX_CYLINDERS 79
+START_SECTOR  equ   2
+SECTORS_N     equ   KERNEL_SIZE / 512 + 1
+MAX_SECTORS   equ   18
+MAX_HEADS     equ   1
+MAX_CYLINDERS equ   79
+
+%macro READ_OVERFLOW_CHECK 0
+  %if ((START_SECTOR + SECTORS_N) / 18) > MAX_CYLINDERS 
+    %error "--- READ OVERFLOW --- 0o0"
+  %endif
+%endmacro
+
+
+READ_OVERFLOW_CHECK
 
 cli
 
@@ -51,19 +61,16 @@ read_sectors:
   xor dh, dh
 
   inc ch                ; next cylinder
-  cmp ch, MAX_CYLINDERS ; overflow check
-  jle read_sectors
+  jmp read_sectors
 
-print_read_overflow:
-  mov bx, read_overflow_msg
-  call print
-  jmp inf_loop
 
-print_read_err:
-  mov bx, read_error_msg
-  call print
-  jmp inf_loop
-
+; print function 
+; Using BIOS calls, it displays the string
+; 
+; Inputs:
+;   bx: string pointer
+;
+; Clobbers: ah, al, bx
 print:
   mov ah, 0x0E
   .loop:
@@ -76,6 +83,12 @@ print:
   .end:
     ret
 
+
+print_read_err:
+  mov bx, read_error_msg
+  call print
+  jmp inf_loop
+
 read_complete:
   mov bx, read_complete_msg
   call print
@@ -84,7 +97,6 @@ inf_loop:
   jmp inf_loop
 
 read_error_msg:    db "[FAILED] Read error -x-", 0x0A, 0x0D
-read_overflow_msg: db "[FAILED] READ OVERFLOW 0o0", 0x0A, 0x0D
 read_complete_msg: db "[  OK  ] Reading kernel completed successfully -w-"
 
 times 510-($-$$) db 0
