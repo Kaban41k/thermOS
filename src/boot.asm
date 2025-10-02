@@ -15,21 +15,6 @@ MAX_CYLINDERS equ   79
 
 READ_OVERFLOW_CHECK
 
-START_SECTOR  equ   2
-SECTORS_N     equ   KERNEL_SIZE / 512 + 1
-MAX_SECTORS   equ   18
-MAX_HEADS     equ   1
-MAX_CYLINDERS equ   79
-
-%macro READ_OVERFLOW_CHECK 0
-  %if ((START_SECTOR + SECTORS_N) / 18) > MAX_CYLINDERS 
-    %error "--- READ OVERFLOW --- 0o0"
-  %endif
-%endmacro
-
-
-READ_OVERFLOW_CHECK
-
 cli
 
 mov ax, 0x0
