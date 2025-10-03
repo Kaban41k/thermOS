@@ -1,8 +1,18 @@
 extern void inf_loop();
 
+void usless_print(char* str, int n) {
+  char* display_buf = (char*) 0xB8000;
+  
+  for (int i = 0; i < n; i++) {
+    *((char*) display_buf) = str[i];
+    display_buf += 2;
+  }
+}
+
 void kernel_entry() {
-  *((short int*) 0xB8000) = (2 << 8) | 0x4B;
-  *((short int*) 0xB8002) = (5 << 8) | 0x42;
-  *((short int*) 0xB8004) = (4 << 8) | 0x4E;
+  char output[] = "Hello :)                               ";
+
+  usless_print(output, 39);
+
   inf_loop();
 }
