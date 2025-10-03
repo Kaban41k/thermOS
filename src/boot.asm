@@ -19,8 +19,8 @@ READ_OVERFLOW_CHECK
 cli
 
 xor ax, ax
-mov ss, ax        ; stack seg init (0x7C00)
 mov ds, ax        ; data seg init (0x7C00)
+mov ss, ax        ; stack seg init (0x7C00)
 mov sp, 0x7C00    ; stack pointer (0x0000)
 
 mov di, 0x7E0
