@@ -17,10 +17,8 @@ READ_OVERFLOW_CHECK
 
 cli
 
-mov ax, 0x0
-mov ss, ax        ; stack seg init (0x7C00)
-
 xor ax, ax
+mov ss, ax        ; stack seg init (0x7C00)
 mov ds, ax        ; data seg init (0x7C00)
 mov sp, 0x7C00    ; stack pointer (0x0000)
 
@@ -128,19 +126,19 @@ gdt:
   .null:                dq 0
   csd:
     .limitLo:           dw 0xFF
-    .baseLo:            dw 0
-    .baseMid:           db 0
-    .P_DPL_S_type:      db 0b1001_1010
-    .G_B_0_AVL_limitHi: db 0b1100_1111
-    .baseHi:            db 0
+    .baseLo:            dw 0x0
+    .baseMid:           db 0x0
+    .P_DPL_S_type:      db 0b10011010
+    .G_B_0_AVL_limitHi: db 0b11001111
+    .baseHi:            db 0x0
 
   dsd:
     .limitLo:           dw 0xFF
-    .baseLo:            dw 0
-    .baseMid:           db 0
-    .P_DPL_S_type:      db 0b1001_0010
-    .G_B_0_AVL_limitHi: db 0b1100_1111
-    .baseHi:            db 0
+    .baseLo:            dw 0x0
+    .baseMid:           db 0x0
+    .P_DPL_S_type:      db 0b10010010
+    .G_B_0_AVL_limitHi: db 0b11001111
+    .baseHi:            db 0x0
 
 read_error_msg:    db "[FAILED] Read error -x-", 0x0A, 0x0D
 read_complete_msg: db "[  OK  ] Reading kernel completed successfully -w-"
