@@ -4,7 +4,7 @@ void usless_print(char* str, int n) {
   char* display_buf = (char*) 0xB8000;
   
   for (int i = 0; i < n; i++) {
-    *((char*) display_buf) = str[i];
+    *display_buf = str[i];
     display_buf += 2;
   }
 }
