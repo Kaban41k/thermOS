@@ -18,10 +18,8 @@ READ_OVERFLOW_CHECK
 
 cli
 
-mov ax, 0x0
-mov ss, ax        ; stack seg init (0x7C00)
-
 xor ax, ax
+mov ss, ax        ; stack seg init (0x7C00)
 mov ds, ax        ; data seg init (0x7C00)
 mov sp, 0x7C00    ; stack pointer (0x0000)
 
@@ -91,7 +89,7 @@ print_read_err:
 
 read_complete:
   mov bx, read_complete_msg
-  call print
+  call print  
 
 inf_loop:
   jmp inf_loop
