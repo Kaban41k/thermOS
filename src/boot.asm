@@ -109,20 +109,21 @@ next:
   mov fs, eax
   mov gs, eax
 
+  mov esp, 0x7C00 - 12 ; Hello from System V ABI (Stack alignment n % 16 == 4)
+
 extern kernel_entry
 call kernel_entry
 
-[BITS 32]
 [GLOBAL inf_loop]
 inf_loop:
   jmp inf_loop
 
 gdt_descriptor:
-  dw 0x17
-  dd gdt
+  dw gdt_end - gdt - 1  ; gdt_size - 1
+  dd gdt                ; gdt base address
 
 align 8
-gdt:
+gdt:      ; global descriptor table
   .null:                dq 0
   csd:
     .limitLo:           dw 0xFF
@@ -139,9 +140,10 @@ gdt:
     .P_DPL_S_type:      db 0b10010010
     .G_B_0_AVL_limitHi: db 0b11001111
     .baseHi:            db 0x0
+gdt_end:
 
 read_error_msg:    db "[FAILED] Read error -x-", 0x0A, 0x0D
-read_complete_msg: db "[  OK  ] Reading kernel completed successfully -w-"
+read_complete_msg: db "[  OK  ] Reading kernel completed successfully owo"
 
 times 510-($-$$) db 0
 dw 0xAA55
