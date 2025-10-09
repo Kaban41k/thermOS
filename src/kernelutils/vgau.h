@@ -10,11 +10,14 @@ typedef struct {
 	void* ptr;
 	size_t x_size;
 	size_t y_size;
+	size_t cursor_x;
+	size_t cursor_y;
 } window;
 
-void* vga_buf = (void*) 0xB8000;
 const size_t vga_x_size = 80;
 const size_t vga_y_size = 25;
+
+void* vga_buf = (void*) 0xB8000;
 
 // -----VGA-----
 char* vga_get_char_ptr(size_t x, size_t y) {
@@ -47,7 +50,9 @@ void vga_scroll_down() {
 
 // -----WIN-----
 window create_window(size_t x_size, size_t y_size, size_t x_offset, size_t y_offset) {
-	window win = {.ptr = (void*) vga_get_char_ptr(x_offset, y_offset), .x_size = x_size, .y_size = y_size};
+	window win = {.ptr = (void*) vga_get_char_ptr(x_offset, y_offset), 
+				        .x_size = x_size, .y_size = y_size,
+				        .cursor_x = 1, .cursor_y = 1};
 	return win;
 }
 
@@ -69,12 +74,20 @@ void win_print_char(window win, char c, size_t x, size_t y) {
 
 void win_scroll_down(window win) {
 	for (size_t i = 0; i < win.y_size - 1; i++) {
-		memmove(win.ptr + 2 * vga_x_size * i, win.ptr + 2 * vga_x_size * (i + 1), win.x_size);
+		memmove(win.ptr + 2 * vga_x_size * i, win.ptr + 2 * vga_x_size * (i + 1), 2 * win.x_size);
 	}
 
 	for (size_t i = 0; i < win.x_size; i++) {
 		win_print_char(win, 0, i, win.y_size - 1);
 	}
+}
+
+void win_select_color(window win, char color) {
+  for (size_t y = 0; y < win.y_size; y++) {
+    for (size_t x = 0; x < win.x_size; x++) {
+      *(win_get_char_ptr(win, x, y) + 1) = color;
+    }
+  }
 }
 
 #endif
