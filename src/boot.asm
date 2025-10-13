@@ -1,5 +1,4 @@
 [BITS 16]
-[ORG 0x7C00]
 
 START_SECTOR  equ   2
 SECTORS_N     equ   KERNEL_SIZE / 512 + 1
@@ -18,11 +17,9 @@ READ_OVERFLOW_CHECK
 
 cli
 
-mov ax, 0x0
-mov ss, ax        ; stack seg init (0x7C00)
-
 xor ax, ax
 mov ds, ax        ; data seg init (0x7C00)
+mov ss, ax        ; stack seg init (0x7C00)
 mov sp, 0x7C00    ; stack pointer (0x0000)
 
 mov di, 0x7E0
@@ -83,21 +80,70 @@ print:
   .end:
     ret
 
-
 print_read_err:
   mov bx, read_error_msg
   call print
-  jmp inf_loop
+err_loop:
+  jmp err_loop
 
 read_complete:
   mov bx, read_complete_msg
   call print
 
+; 32 bit mode
+lgdt [gdt_descriptor]
+cld
+
+mov eax, cr0
+or eax, 1
+mov cr0, eax
+
+jmp 0x8:next
+
+[BITS 32]
+next:
+  mov eax, 0x10
+  mov ds, eax
+  mov ss, eax
+  mov es, eax
+  mov fs, eax
+  mov gs, eax
+
+  mov esp, 0x7C00 - 12 ; Hello from System V ABI (Stack alignment n % 16 == 4)
+
+extern kernel_entry
+call kernel_entry
+
+[GLOBAL inf_loop]
 inf_loop:
   jmp inf_loop
 
+gdt_descriptor:
+  dw gdt_end - gdt - 1  ; gdt_size - 1
+  dd gdt                ; gdt base address
+
+align 8
+gdt:      ; global descriptor table
+  .null:                dq 0
+  csd:
+    .limitLo:           dw 0xFF
+    .baseLo:            dw 0x0
+    .baseMid:           db 0x0
+    .P_DPL_S_type:      db 0b10011010
+    .G_B_0_AVL_limitHi: db 0b11001111
+    .baseHi:            db 0x0
+
+  dsd:
+    .limitLo:           dw 0xFF
+    .baseLo:            dw 0x0
+    .baseMid:           db 0x0
+    .P_DPL_S_type:      db 0b10010010
+    .G_B_0_AVL_limitHi: db 0b11001111
+    .baseHi:            db 0x0
+gdt_end:
+
 read_error_msg:    db "[FAILED] Read error -x-", 0x0A, 0x0D
-read_complete_msg: db "[  OK  ] Reading kernel completed successfully -w-"
+read_complete_msg: db "[  OK  ] Reading kernel completed successfully owo"
 
 times 510-($-$$) db 0
 dw 0xAA55
