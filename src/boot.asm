@@ -118,6 +118,11 @@ call kernel_entry
 inf_loop:
   jmp inf_loop
 
+[GLOBAL cli]
+cli:
+    cli
+    ret
+
 gdt_descriptor:
   dw gdt_end - gdt - 1  ; gdt_size - 1
   dd gdt                ; gdt base address

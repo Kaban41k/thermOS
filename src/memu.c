@@ -1,8 +1,3 @@
-#ifndef memu
-#define memu
-
-// Memory Utilities
-
 #include <stddef.h>
 
 
@@ -29,5 +24,3 @@ void* memzero(void* dst, size_t n) {
 
   return dst;
 }
-
-#endif

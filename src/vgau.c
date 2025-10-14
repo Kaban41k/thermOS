@@ -1,10 +1,8 @@
-#ifndef vgau
-#define vgau
-
-// VGA Utilities
-
 #include <stddef.h>
 #include "memu.h"
+
+#define VGA_X_SIZE 80
+#define VGA_Y_SIZE 25
 
 typedef struct {
 	void* ptr;
@@ -14,19 +12,16 @@ typedef struct {
 	size_t cursor_y;
 } window;
 
-const size_t vga_x_size = 80;
-const size_t vga_y_size = 25;
-
-void* vga_buf = (void*) 0xB8000;
+void* VGA_BUF = (void*) 0xB8000;
 
 // -----VGA-----
 char* vga_get_char_ptr(size_t x, size_t y) {
-	return (char*) vga_buf + 2 * (y * 80 + x);
+	return (char*) VGA_BUF + 2 * (y * 80 + x);
 }
 
 void vga_fill_screen(char c) {
-  for (size_t y = 0; y < vga_y_size; y++) {
-	  for (size_t x = 0; x < vga_x_size; x++) {
+  for (size_t y = 0; y < VGA_Y_SIZE; y++) {
+	  for (size_t x = 0; x < VGA_X_SIZE; x++) {
 			*vga_get_char_ptr(x, y) = c;
   	}
   }
@@ -41,9 +36,9 @@ void vga_print_char(char c, size_t x, size_t y) {
 }
 
 void vga_scroll_down() {
-	memmove(vga_buf, vga_buf + vga_x_size * 2, 2 * vga_x_size * (vga_y_size - 1));
-	for (size_t i = 0; i < vga_x_size; i++) {
-		vga_print_char(0, i, vga_y_size - 1);
+	memmove(VGA_BUF, VGA_BUF + VGA_X_SIZE * 2, 2 * VGA_X_SIZE * (VGA_Y_SIZE - 1));
+	for (size_t i = 0; i < VGA_X_SIZE; i++) {
+		vga_print_char(0, i, VGA_Y_SIZE - 1);
 	}
 }
 
@@ -74,7 +69,7 @@ void win_print_char(window win, char c, size_t x, size_t y) {
 
 void win_scroll_down(window win) {
 	for (size_t i = 0; i < win.y_size - 1; i++) {
-		memmove(win.ptr + 2 * vga_x_size * i, win.ptr + 2 * vga_x_size * (i + 1), 2 * win.x_size);
+		memmove(win.ptr + 2 * VGA_X_SIZE * i, win.ptr + 2 * VGA_X_SIZE * (i + 1), 2 * win.x_size);
 	}
 
 	for (size_t i = 0; i < win.x_size; i++) {
@@ -89,5 +84,3 @@ void win_select_color(window win, char color) {
     }
   }
 }
-
-#endif

@@ -1,10 +1,29 @@
 #include <stddef.h>
-#include "kernelutils/vgau.h"
-#include "kernelutils/outputu.h"
+#include "vgau.h"
+#include "outputu.h"
+#include "assert.h"
+#include "alloc.h"
 
 extern void inf_loop();
 
 void kernel_entry() {
+  vga_clear_screen();
+  window main = create_window(60, 40, 2, 2);
+
+  win_select_color(main, 0x2);
+  
+  init_printer(&main);
+  select_win(&main);
+
+  for (size_t i = 1; i; i++) {
+    void* obj = malloc_immortal(i*3, i);
+    printf("%d byte object, alignment: %d, address: %x\n", i*10, i, (size_t) obj);
+  }
+
+  inf_loop();
+}
+
+void test() {
   vga_fill_screen('}');
 
   window main = create_window(20, 21, 2, 2);
@@ -21,56 +40,35 @@ void kernel_entry() {
   win_select_color(win1, 0x4);
   win_select_color(win2, 0x5);
   win_select_color(win3, 0x1);
-  
-
-
 
   init_printer(&main);
   select_win(&main);  
 
   printf("a");
-  win_print_char(*cur_win, 'f', 1, 1);
 
-  for (int i = 0; i < 1000; i++) {
+  for (int i = 0; i < 100; i++) {
     select_win(&win1);
-    printf("Hello\n"
-      "I'm WIN1\n"
-      "a\n"
-      "b\n"
-      "c\n"
-      "d\n"
-      "e\n");
+    char* s = "seg";
+    printf("%s\n", s);
 
     select_win(&win2);
-    printf("Hello\n"
-      "I'm WIN2\n"
-      "a\n"
-      "b\n"
-      "c\n"
-      "d\n"
-      "e\n");
+    int n = 19897;
+    printf("%d\n", n);
 
 
+    n = 158;
     select_win(&win3);
-    printf("Hello\n"
-      "I'm WIN3\n"
-      "a\n"
-      "b\n"
-      "c\n"
-      "d\n"
-      "e\n");
+    printf("%x\n", n);
 
 
     select_win(&main);
-    printf("Hello\n"
-      "I'm MAIN\n"
-      "a\n"
-      "b\n"
-      "c\n"
-      "d\n"
-      "e\n");
 
-    }
+    char p = i % 200;
+    printf("%c\n", p);
+  }
 
+  assert('a' == 'b');
+
+  printf("%f", &main);
   inf_loop();
 }
