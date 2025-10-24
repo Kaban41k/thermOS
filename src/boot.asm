@@ -92,6 +92,8 @@ read_complete:
 
 ; 32 bit mode
 lgdt [gdt_descriptor]
+
+; clear DF flag
 cld
 
 mov eax, cr0
@@ -122,6 +124,81 @@ inf_loop:
 cli:
     cli
     ret
+
+[GLOBAL sti]
+sti:
+  sti
+  ret
+
+[GLOBAL lidt]
+lidt:
+  mov eax, dword [esp + 4]
+  lidt [eax]
+  ret
+
+[GLOBAL set_regs]
+set_regs:
+  mov eax, 0
+  mov ecx, 10
+  mov edx, 20
+  mov ebx, 30
+  mov ebp, 40
+  mov esi, 50
+  mov edi, 60
+  ret
+
+[GLOBAL div_zero]
+div_zero:
+  idiv eax
+  ret
+
+[GLOBAL int_n]
+int_n:
+  int 0x0
+  ret
+
+
+extern universal_handler
+global collect_context
+collect_context:
+  ; context
+  push ds
+  push es
+  push fs
+  push gs
+  pusha
+
+  ; clear DF flag
+  cld
+
+  ; set right segs
+  mov eax, 0x10
+  mov ds, eax
+  mov es, eax
+  mov fs, eax
+  mov gs, eax
+
+  ; align
+  mov ebx, esp
+  mov edx, esp
+  and edx, 0xF
+  mov ecx, 12
+  sub ecx, edx
+  sub esp, ecx
+
+  push ebx
+  call universal_handler
+
+  ; go back
+  mov esp, ebx
+  popa
+  pop gs
+  pop fs
+  pop es
+  pop ds
+  add esp, 8
+  iret
+
 
 gdt_descriptor:
   dw gdt_end - gdt - 1  ; gdt_size - 1

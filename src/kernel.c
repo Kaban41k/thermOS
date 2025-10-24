@@ -3,8 +3,16 @@
 #include "outputu.h"
 #include "assert.h"
 #include "alloc.h"
+#include "interrupter.h"
 
+
+extern void sti();
 extern void inf_loop();
+extern void set_regs();
+extern void div_zero();
+extern void int_n();
+
+void collect_context();
 
 void kernel_entry() {
   vga_clear_screen();
@@ -15,10 +23,14 @@ void kernel_entry() {
   init_printer(&main);
   select_win(&main);
 
-  for (size_t i = 1; i; i++) {
-    void* obj = malloc_immortal(i*3, i);
-    printf("%d byte object, alignment: %d, address: %x\n", i*10, i, (size_t) obj);
-  }
+  printf("boom");
+
+  set_regs();
+  collect_context();
+
+  //div_zero();
+  //int_n();
+  //sti();
 
   inf_loop();
 }

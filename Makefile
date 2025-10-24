@@ -8,9 +8,9 @@ NASM = nasm -f bin -dKERNEL_SIZE=$(KERNEL_SIZE)
 DEBUG = 1
 
 ifeq ($(DEBUG),1)
-	CFLAGS = -DDEBUG -std=c99 -m32 -O2 -ffreestanding -no-pie -fno-pie -mno-sse -fno-stack-protector
+	CFLAGS = -DDEBUG -std=c23 -m32 -O2 -ffreestanding -no-pie -fno-pie -mno-sse -fno-stack-protector
 else
-	CFLAGS = -std=c99 -m32 -O2 -ffreestanding -no-pie -fno-pie -mno-sse -fno-stack-protector
+	CFLAGS = -std=c23 -m32 -O2 -ffreestanding -no-pie -fno-pie -mno-sse -fno-stack-protector
 endif
 
 C_SOURCES = $(wildcard src/*.c)

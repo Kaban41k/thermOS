@@ -60,6 +60,12 @@ void print_int(unsigned int n, unsigned short int base) {
   char buf[32];
 
   int l = 0;
+
+  if (n == 0) {
+    cursor_print('0');
+    return;
+  }
+
   while (n > 0) {
     int res = n % base;
 
