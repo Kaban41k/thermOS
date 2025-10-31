@@ -3,9 +3,9 @@
 
 // Alloc Utilities
 
-#include <stddef.h>
+#include "types.h"
 
-void* malloc_immortal(size_t size, size_t align);
-void* calloc_immortal(size_t size, size_t align);
+void* malloc_immortal(u32 size, u32 align);
+void* calloc_immortal(u32 size, u32 align);
 
 #endif

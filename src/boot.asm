@@ -139,22 +139,23 @@ lidt:
 [GLOBAL set_regs]
 set_regs:
   mov eax, 0
-  mov ecx, 10
-  mov edx, 20
-  mov ebx, 30
-  mov ebp, 40
-  mov esi, 50
-  mov edi, 60
+  mov ecx, 0xAA
+  mov edx, 0xBB
+  mov ebx, 0xCC
+  mov ebp, 0xDD
+  mov esi, 0xFF
+  mov edi, 0x11
   ret
 
 [GLOBAL div_zero]
 div_zero:
+  xor eax, eax
   idiv eax
   ret
 
 [GLOBAL int_n]
 int_n:
-  int 0x0
+  int 0x2
   ret
 
 

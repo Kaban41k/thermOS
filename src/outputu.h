@@ -4,12 +4,12 @@
 // Output Utilities
 
 #include <stdarg.h>
+#include "types.h"
 #include "vgau.h"
 
-
 typedef struct {
-	size_t x;
-	size_t y;
+	u32 x;
+	u32 y;
 } vcursor;
 
 void init_printer(window* win);

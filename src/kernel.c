@@ -1,10 +1,9 @@
-#include <stddef.h>
+#include "types.h"
 #include "vgau.h"
 #include "outputu.h"
 #include "assert.h"
 #include "alloc.h"
 #include "interrupter.h"
-
 
 extern void sti();
 extern void inf_loop();
@@ -15,6 +14,8 @@ extern void int_n();
 void collect_context();
 
 void kernel_entry() {
+  setup_interrupter();
+
   vga_clear_screen();
   window main = create_window(60, 40, 2, 2);
 
@@ -26,13 +27,12 @@ void kernel_entry() {
   printf("boom");
 
   set_regs();
-  collect_context();
-
-  //div_zero();
+  //collect_context();
+  div_zero();
   //int_n();
   //sti();
 
-  inf_loop();
+  //inf_loop();
 }
 
 void test() {

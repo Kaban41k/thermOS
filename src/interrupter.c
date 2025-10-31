@@ -1,7 +1,7 @@
+#include "types.h"
 #include "assert.h"
 #include "kernelpanic.h"
 #include "alloc.h"
-#include "types.h"
 
 #define TRAMPOLINE_SIZE 8
 #define VECTORS_N 256
@@ -53,7 +53,7 @@ static bool has_error_code(uchar vector) {
 }
 
 static uchar* generate_trampolines() {
-  uchar* trampolines = malloc_immortal(TRAMPOLINE_SIZE * VECTORS_N, 8);
+  uchar* trampolines = malloc_immortal(TRAMPOLINE_SIZE * VECTORS_N, 16);
 
   for (u16 vector = 0; vector < VECTORS_N; vector++) {
     uchar* trampoline = trampolines + vector * TRAMPOLINE_SIZE;
@@ -63,8 +63,8 @@ static uchar* generate_trampolines() {
       trampoline[offset++] = 0x50; // push eax (if needed)
     trampoline[offset++] = 0x6A;   // push const
     trampoline[offset++] = vector; //      const = vector
-    u32 jmp_end = (u32) collect_context - (u32) (trampoline + offset + 5);
     trampoline[offset++] = 0xE9;   // jmp ...
+    u32 jmp_end = (u32) collect_context - (u32) (trampoline + offset + 4);
     *(u32*)(trampoline + offset) = jmp_end;
   }
 
@@ -87,7 +87,8 @@ static void* generate_idt(uchar* trampolines) {
     idt[vector].zero          = 0b0;
     idt[vector].dpl           = 0b00;
     idt[vector].present       = 0b1;
-    idt[vector].offset_high   = (u32)(trampoline) >> 16 & 0xFFFF;
+    idt[vector].offset_high   = ((u32)(trampoline) >> 16) & 0xFFFF;
+    assert(sizeof(idt[vector]) == 8);
   }
 
   return idt;
@@ -97,19 +98,19 @@ void setup_interrupter() {
   uchar* trampolines = generate_trampolines();
   void* idt = generate_idt(trampolines);
   u16 idt_limit = VECTORS_N * sizeof(interrupt_descriptor) - 1;
-  u64 idt_ret = ((u64)idt << 16) | idt_limit; 
+  u64 idt_ret = ((u64) idt << 16) | idt_limit; 
   lidt(&idt_ret);
 }
 
 void universal_handler(interrupt_context* context) {
   kernel_panic(
-    "unhandled interrupt #%x at %x:%x\n\n"
+    "unhandled interrupt #%x at %R:%R\n\n"
     "Registers: \n"
-    "    EAX: %x    EBX: %x    ECX: %x    EDX: %x\n"
-    "    EDI: %x    ESI: %x    ESP: %x    EBP: %x\n"
-    "    DS : %x    ES : %x    GS : %x    FS : %x\n\n"
-    "Error code: %x\n\n"
-    "EFLAGS: %x\n",
+    "  EAX: %R,  EBX: %R,  ECX: %R,  EDX: %R,\n"
+    "  EDI: %R,  ESI: %R,  ESP: %R,  EBP: %R,\n"
+    "  DS : %R,  ES : %R,  GS : %R,  FS : %R\n\n"
+    "Error code: %R\n\n"
+    "EFLAGS: %R\n",
     context->vector, context->cs, context->eip, context->eax, context->ebx, context->ecx, context->edx,
     context->edi, context->esi, context->esp, context->ebp, context->ds, context->es, context->gs, context->fs, 
     context->error_code,
