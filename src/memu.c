@@ -1,14 +1,14 @@
 #include <stddef.h>
+#include "types.h"
 
-
-void* memmove(void* dst, const void* src, size_t n) {
+void* memmove(void* dst, const void* src, u32 n) {
   if (src >= dst) {
-    for (size_t offset = 0; offset < n; offset++) {
+    for (u32 offset = 0; offset < n; offset++) {
       *((char*) dst + offset) = *((char*) src + offset);
     }
   } else {
-    size_t offset;
-    for (size_t i = 0; i < n; i++) {
+    u32 offset;
+    for (u32 i = 0; i < n; i++) {
       offset = n - i - 1;
       *((char*) dst + offset) = *((char*) src + offset);
     }
@@ -17,8 +17,8 @@ void* memmove(void* dst, const void* src, size_t n) {
   return dst;
 }
 
-void* memzero(void* dst, size_t n) {
-  for (size_t offset = 0; offset < n; offset++) {
+void* memzero(void* dst, u32 n) {
+  for (u32 offset = 0; offset < n; offset++) {
     *((char*) dst + offset) = 0;
 	}
 

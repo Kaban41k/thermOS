@@ -3,26 +3,25 @@
 
 // VGA Utilities
 
-#include <stddef.h>
-
+#include "types.h"
 
 typedef struct {
 	void* ptr;
-	size_t x_size;
-	size_t y_size;
-	size_t cursor_x;
-	size_t cursor_y;
+	u32 x_size;
+	u32 y_size;
+	u32 cursor_x;
+	u32 cursor_y;
 } window;
 
-char* vga_get_char_ptr(size_t x, size_t y);
+char* vga_get_char_ptr(u32 x, u32 y);
 void vga_fill_screen(char c);
 void vga_clear_screen();
-void vga_print_char(char c, size_t x, size_t y);
+void vga_print_char(char c, u32 x, u32 y);
 void vga_scroll_down();
-window create_window(size_t x_size, size_t y_size, size_t x_offset, size_t y_offset);
-char* win_get_char_ptr(window win, size_t x, size_t y);
+window create_window(u32 x_size, u32 y_size, u32 x_offset, u32 y_offset);
+char* win_get_char_ptr(window win, u32 x, u32 y);
 char* win_clear(window win);
-void win_print_char(window win, char c, size_t x, size_t y);
+void win_print_char(window win, char c, u32 x, u32 y);
 void win_scroll_down(window win);
 void win_select_color(window win, char color);
 

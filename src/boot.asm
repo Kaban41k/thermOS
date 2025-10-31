@@ -92,6 +92,8 @@ read_complete:
 
 ; 32 bit mode
 lgdt [gdt_descriptor]
+
+; clear DF flag
 cld
 
 mov eax, cr0
@@ -122,6 +124,11 @@ inf_loop:
 cli:
     cli
     ret
+
+[GLOBAL sti]
+sti:
+  sti
+  ret
 
 gdt_descriptor:
   dw gdt_end - gdt - 1  ; gdt_size - 1

@@ -1,11 +1,11 @@
-#include <stddef.h>
 #include <stdarg.h>
+#include "types.h"
 #include "vgau.h"
 #include "kernelpanic.h"
 
 typedef struct {
-	size_t x;
-	size_t y;
+	u32 x;
+	u32 y;
 } vcursor;
 
 vcursor cursor = {.x = 1, .y = 1};
@@ -55,13 +55,19 @@ void cursor_print(char c) {
   cursor_next();
 }
 
-void print_int(unsigned int n, unsigned short int base) {
+void print_int(u32 n, u16 base) {
   char c;
   char buf[32];
 
-  int l = 0;
+  u16 l = 0;
+
+  if (n == 0) {
+    cursor_print('0');
+    return;
+  }
+
   while (n > 0) {
-    int res = n % base;
+    i64 res = n % base;
 
     if (res < 10) {
       c = '0' + res;
@@ -73,12 +79,12 @@ void print_int(unsigned int n, unsigned short int base) {
     n /= base;
   }
 
-  for (size_t i = 0; i < l; i++) {
+  for (u16 i = 0; i < l; i++) {
     cursor_print(buf[l - i - 1]);
   }
 }
 
-void print_d(int n) {
+void print_d(i32 n) {
   if (n < 0) {
     cursor_print('-');
     n *= -1;
@@ -90,7 +96,7 @@ void print_d(int n) {
 void print_s(const char* fmt) {
   if (*fmt == '\0') return;
 
-  size_t offset = 0;
+  u64 offset = 0;
   
   do {
     if (*(fmt + offset) == '\n') {
@@ -107,31 +113,53 @@ void print_s(const char* fmt) {
   } while (*(fmt + ++offset) != '\0');
 }
 
+void print_reg(u32 n, u16 l) {
+  u32 x = n;
+  u16 n_l = 0;
+
+  do {
+    x /= 16;
+    n_l++;
+  } while (x != 0);
+
+  print_s("0x");
+  for (u32 i = 0; i < l - n_l; i++)
+    print_s("0");
+
+  print_int(n, 16);
+}
+
 void vprintf(const char* fmt, va_list args) {
   char c;
   if ((c = *fmt) == '\0') return;
 
-  size_t offset = 0;
+  u64 offset = 0;
   
   do {
     if (c == '%') {
       c = *(fmt + ++offset);
 
       switch (c) {
+        case 'R': {
+          i32 n = va_arg(args, i32);
+          print_reg(n, 8);
+          continue;
+        }
+        
         case 'd': {
-          int n = va_arg(args, int); 
+          i32 n = va_arg(args, i32); 
           print_d(n);
           continue;
         }
         
         case 'x': {
-          int n = va_arg(args, int); 
+          i32 n = va_arg(args, i32); 
           print_int(n, 16);
           continue;
         }
         
         case 'c': {
-          c = va_arg(args, int);
+          c = va_arg(args, i32);
           break;
         }
         
