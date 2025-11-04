@@ -1,18 +1,11 @@
 #include "types.h"
 #include "memu.h"
+#include "vgau.h"
 
 #define VGA_X_SIZE 80
 #define VGA_Y_SIZE 25
 
-typedef struct {
-	void* ptr;
-	u32 x_size;
-	u32 y_size;
-	u32 cursor_x;
-	u32 cursor_y;
-} window;
-
-void* VGA_BUF = (void*) 0xB8000;
+static void* VGA_BUF = (void*) 0xB8000;
 
 // -----VGA-----
 char* vga_get_char_ptr(u32 x, u32 y) {
@@ -44,18 +37,18 @@ void vga_scroll_down() {
 
 
 // -----WIN-----
-window create_window(u32 x_size, u32 y_size, u32 x_offset, u32 y_offset) {
-	window win = {.ptr = (void*) vga_get_char_ptr(x_offset, y_offset), 
+Window create_window(u32 x_size, u32 y_size, u32 x_offset, u32 y_offset) {
+	Window win = {.ptr = (void*) vga_get_char_ptr(x_offset, y_offset), 
 				        .x_size = x_size, .y_size = y_size,
 				        .cursor_x = 1, .cursor_y = 1};
 	return win;
 }
 
-char* win_get_char_ptr(window win, u32 x, u32 y) {
+char* win_get_char_ptr(Window win, u32 x, u32 y) {
 	return (char*) win.ptr + 2 * (y * 80 + x);
 }
 
-char* win_clear(window win) {
+char* win_clear(Window win) {
 	for (u32 y = 0; y < win.y_size; y++) {
 	  for (u32 x = 0; x < win.x_size; x++) {
 			*win_get_char_ptr(win, x, y) = 0;
@@ -63,11 +56,11 @@ char* win_clear(window win) {
   }
 }
 
-void win_print_char(window win, char c, u32 x, u32 y) {
+void win_print_char(Window win, char c, u32 x, u32 y) {
 	*win_get_char_ptr(win, x, y) = c;
 }
 
-void win_scroll_down(window win) {
+void win_scroll_down(Window win) {
 	for (u32 i = 0; i < win.y_size - 1; i++) {
 		memmove(win.ptr + 2 * VGA_X_SIZE * i, win.ptr + 2 * VGA_X_SIZE * (i + 1), 2 * win.x_size);
 	}
@@ -77,7 +70,7 @@ void win_scroll_down(window win) {
 	}
 }
 
-void win_select_color(window win, char color) {
+void win_select_color(Window win, char color) {
   for (u32 y = 0; y < win.y_size; y++) {
     for (u32 x = 0; x < win.x_size; x++) {
       *(win_get_char_ptr(win, x, y) + 1) = color;

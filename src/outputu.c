@@ -1,32 +1,32 @@
 #include <stdarg.h>
+#include <stddef.h>
 #include "types.h"
+#include "assert.h"
 #include "vgau.h"
 #include "kernelpanic.h"
 
 typedef struct {
 	u32 x;
 	u32 y;
-} vcursor;
+} Cursor;
 
-vcursor cursor = {.x = 1, .y = 1};
-window* cur_win;
+Cursor cursor = {.x = 1, .y = 1};
+Window* cur_win = NULL;
 
-void init_printer(window* win) {
-  cur_win = win;
+void select_win(Window* win) {
+  if (cur_win != NULL) {
+    cur_win->cursor_x = cursor.x;
+    cur_win->cursor_y = cursor.y;
+  }
 
-  cursor.x = 1;
-  cursor.y = 1;
-}
-
-void select_win(window* win) {
-  cur_win->cursor_x = cursor.x;
-  cur_win->cursor_y = cursor.y;
   cursor.x = win->cursor_x;
   cursor.y = win->cursor_y;
   cur_win = win;
 }
 
 void scroll_checker() {
+  assert(cur_win != NULL);
+  
   if (cursor.y > cur_win->y_size - 1) {
     cursor.y = cur_win->y_size - 1;
     win_scroll_down(*cur_win);
@@ -34,35 +34,55 @@ void scroll_checker() {
 }
 
 void line_feed() {
+  assert(cur_win != NULL);
+
   cursor.x = 1;
   cursor.y++;
   scroll_checker();
 }
 
 void line_feed_checker() {
+  assert(cur_win != NULL);
+
   if (cursor.x > cur_win->x_size - 2) {
     line_feed();
   }
 }
 
+void cursor_move(u32 x, u32 y) {
+  assert(cur_win != NULL);
+  assert(x < cur_win->x_size);
+  assert(y < cur_win->y_size);
+  
+  cursor.x = x;
+  cursor.y = y;
+}
+
 void cursor_next() {
+  assert(cur_win != NULL);
+
   cursor.x++;
   line_feed_checker();
 }
 
-void cursor_print(char c) {
+void print_char(char c) {
+  assert(cur_win != NULL);
+
   win_print_char(*cur_win, c, cursor.x, cursor.y);
   cursor_next();
 }
 
 void print_int(u32 n, u16 base) {
+  assert(cur_win != NULL);
+  assert(2 < base && base < 32);
+
   char c;
   char buf[32];
 
   u16 l = 0;
 
   if (n == 0) {
-    cursor_print('0');
+    print_char('0');
     return;
   }
 
@@ -78,15 +98,17 @@ void print_int(u32 n, u16 base) {
     buf[l++] = c;
     n /= base;
   }
+  
 
-  for (u16 i = 0; i < l; i++) {
-    cursor_print(buf[l - i - 1]);
-  }
+  for (u16 i = 0; i < l; i++)
+    print_char(buf[l - i - 1]);
 }
 
 void print_d(i32 n) {
+  assert(cur_win != NULL);
+
   if (n < 0) {
-    cursor_print('-');
+    print_char('-');
     n *= -1;
   }
 
@@ -94,6 +116,8 @@ void print_d(i32 n) {
 }
 
 void print_s(const char* fmt) {
+  assert(cur_win != NULL);
+
   if (*fmt == '\0') return;
 
   u64 offset = 0;
@@ -109,11 +133,13 @@ void print_s(const char* fmt) {
       continue;
     }
     
-    cursor_print(*(fmt + offset));
+    print_char(*(fmt + offset));
   } while (*(fmt + ++offset) != '\0');
 }
 
 void print_reg(u32 n, u16 l) {
+  assert(cur_win != NULL);
+
   u32 x = n;
   u16 n_l = 0;
 
@@ -130,6 +156,7 @@ void print_reg(u32 n, u16 l) {
 }
 
 void vprintf(const char* fmt, va_list args) {
+  assert(cur_win != NULL);
   char c;
   if ((c = *fmt) == '\0') return;
 
@@ -186,11 +213,12 @@ void vprintf(const char* fmt, va_list args) {
       continue;
     }
     
-    cursor_print(c);
+    print_char(c);
   } while ((c = *(fmt + ++offset)) != '\0');
 }
 
 void printf(const char* fmt, ...) {
+  assert(cur_win != NULL);
   va_list args;
   va_start(args, fmt);
   vprintf(fmt, args);

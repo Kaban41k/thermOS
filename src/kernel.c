@@ -8,11 +8,10 @@ extern void inf_loop();
 
 void kernel_entry() {
   vga_clear_screen();
-  window main = create_window(60, 40, 2, 2);
+  Window main = create_window(60, 40, 2, 2);
 
   win_select_color(main, 0x2);
   
-  init_printer(&main);
   select_win(&main);
 
   for (size_t i = 1; i; i++) {
@@ -26,10 +25,10 @@ void kernel_entry() {
 void test() {
   vga_fill_screen('}');
 
-  window main = create_window(20, 21, 2, 2);
-  window win1 = create_window(30, 10, 24, 2);
-  window win2 = create_window(20, 10, 24, 13);
-  window win3 = create_window(20, 10, 45, 13);
+  Window main = create_window(20, 21, 2, 2);
+  Window win1 = create_window(30, 10, 24, 2);
+  Window win2 = create_window(20, 10, 24, 13);
+  Window win3 = create_window(20, 10, 45, 13);
 
   win_clear(main);
   win_clear(win1);
@@ -41,7 +40,6 @@ void test() {
   win_select_color(win2, 0x5);
   win_select_color(win3, 0x1);
 
-  init_printer(&main);
   select_win(&main);  
 
   printf("a");
