@@ -74,7 +74,7 @@ void print_char(char c) {
 
 void print_int(u32 n, u16 base) {
   assert(cur_win != NULL);
-  assert(2 < base && base < 32);
+  assert(1 < base && base < 32);
 
   char c;
   char buf[32];
