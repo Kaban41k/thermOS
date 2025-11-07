@@ -92,6 +92,8 @@ read_complete:
 
 ; 32 bit mode
 lgdt [gdt_descriptor]
+
+; clear DF flag
 cld
 
 mov eax, cr0
@@ -117,6 +119,16 @@ call kernel_entry
 [GLOBAL inf_loop]
 inf_loop:
   jmp inf_loop
+
+[GLOBAL cli]
+cli:
+    cli
+    ret
+
+[GLOBAL sti]
+sti:
+  sti
+  ret
 
 gdt_descriptor:
   dw gdt_end - gdt - 1  ; gdt_size - 1

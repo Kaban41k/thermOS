@@ -2,8 +2,19 @@
 # Variables
 
 # Build tools
-KERNEL_SIZE = 16384
+KERNEL_SIZE = 65536
 NASM = nasm -f bin -dKERNEL_SIZE=$(KERNEL_SIZE)
+
+DEBUG = 1
+
+ifeq ($(DEBUG),1)
+	CFLAGS = -DDEBUG -std=c99 -m32 -O2 -ffreestanding -no-pie -fno-pie -mno-sse -fno-stack-protector
+else
+	CFLAGS = -std=c99 -m32 -O2 -ffreestanding -no-pie -fno-pie -mno-sse -fno-stack-protector
+endif
+
+C_SOURCES = $(wildcard src/*.c)
+C_OBJECTS = $(patsubst src/%.c, .tmp/%.o, $(C_SOURCES))
 
 
 # =============================================================================
@@ -11,30 +22,23 @@ NASM = nasm -f bin -dKERNEL_SIZE=$(KERNEL_SIZE)
 
 all: clean build test
 
-.tmp/boot.o:
-	$(NASM) -felf src/boot.asm -o .tmp/boot.o
+.tmp/%.o: src/%.c
+		gcc -DKERNEL_SIZE=$(KERNEL_SIZE) $(CFLAGS) -c $< -o $@
 
-.tmp/kernel.o:
-	gcc -std=c99 -m32 -O2 -ffreestanding -no-pie -fno-pie -mno-sse -fno-stack-protector -c src/kernel.c -o .tmp/kernel.o
+.tmp/boot.o: src/boot.asm
+		nasm -felf -dKERNEL_SIZE=$(KERNEL_SIZE) src/boot.asm -o .tmp/boot.o
 
-.tmp/os.elf: .tmp/boot.o .tmp/kernel.o
-	ld -m elf_i386 .tmp/boot.o .tmp/kernel.o -T link.ld -o .tmp/os.elf
+.tmp/os.elf: .tmp/boot.o $(C_OBJECTS) link.ld
+		ld -m elf_i386 .tmp/boot.o $(C_OBJECTS) -T link.ld -o .tmp/os.elf
 
 .tmp/os.bin: .tmp/os.elf
-	objcopy -I elf32-i386 -O binary .tmp/os.elf .tmp/os.bin	
+		objcopy -I elf32-i386 -O binary .tmp/os.elf .tmp/os.bin
 
-	dd if=/dev/zero of=os.img bs=1024 count=1440
-	dd if=.tmp/os.bin of=.tmp/os.img conv=notrunc
-	
-.tmp/boot.bin: src/boot.asm
-	$(NASM) src/boot.asm -o .tmp/boot.bin
+os.img: .tmp/os.bin
+		dd if=/dev/zero of=os.img bs=1024 count=1440
+		dd if=.tmp/os.bin of=os.img conv=notrunc
 
-boot.img: .tmp/boot.bin
-	dd if=/dev/zero of=boot.img bs=1024 count=1440
-	dd if=.tmp/boot.bin of=boot.img conv=notrunc
-	dd if=foo of=boot.img conv=notrunc seek=1
-
-build: .tmp/os.bin
+build: os.img
 
 clean:
 	rm -f *.img
@@ -42,10 +46,10 @@ clean:
 	mkdir .tmp
 
 test: build
-	qemu-system-i386 -cpu pentium2 -m 1g -fda .tmp/os.img -monitor stdio -device VGA -display gtk
+	qemu-system-i386 -cpu pentium2 -m 1g -fda .tmp/os.bin -monitor stdio -device VGA -display gtk
 
 debug: build
-	qemu-system-i386 -cpu pentium2 -m 1g -fda .tmp/os.img -monitor stdio -device VGA -display gtk -s -S &
+	qemu-system-i386 -cpu pentium2 -m 1g -fda .tmp/os.bin -monitor stdio -device VGA -display gtk -s -S &
 	gdb
 
 .PHONY: all build clean test debug
