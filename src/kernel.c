@@ -1,4 +1,5 @@
 #include "types.h"
+#include "asmu.h"
 #include "vgau.h"
 #include "outputu.h"
 #include "assert.h"

@@ -1,14 +1,11 @@
 #include "types.h"
+#include "asmu.h"
 #include "assert.h"
 #include "kernelpanic.h"
 #include "alloc.h"
 
 #define TRAMPOLINE_SIZE 8
 #define VECTORS_N 256
-
-extern void inf_loop();
-extern void collect_context();
-extern void lidt(void* idt_ptr);
 
 typedef struct {
   u16    offset_low;
@@ -53,7 +50,7 @@ static bool has_error_code(uchar vector) {
 }
 
 static uchar* generate_trampolines() {
-  uchar* trampolines = malloc_immortal(TRAMPOLINE_SIZE * VECTORS_N, 16);
+  uchar* trampolines = (uchar*) malloc_immortal(TRAMPOLINE_SIZE * VECTORS_N, 16);
 
   for (u16 vector = 0; vector < VECTORS_N; vector++) {
     uchar* trampoline = trampolines + vector * TRAMPOLINE_SIZE;
@@ -73,7 +70,7 @@ static uchar* generate_trampolines() {
 
 static void* generate_idt(uchar* trampolines) {
   interrupt_descriptor* idt = 
-    malloc_immortal(sizeof(interrupt_descriptor) * VECTORS_N, sizeof(interrupt_descriptor));
+    (interrupt_descriptor*) malloc_immortal(sizeof(interrupt_descriptor) * VECTORS_N, sizeof(interrupt_descriptor));
 
   for (u16 vector = 0; vector < VECTORS_N; vector++) {
     uchar* trampoline = trampolines + vector * TRAMPOLINE_SIZE;
