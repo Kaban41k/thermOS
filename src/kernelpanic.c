@@ -3,12 +3,11 @@
 #include "vgau.h"
 #include "outputu.h"
 
-
 void vkernel_panic(const char* fmt, va_list args) {
   cli();
   vga_clear_screen();
 
-  window screen = create_window(80, 25, 0, 0);
+  Window screen = create_window(80, 25, 0, 0);
   select_win(&screen);
   win_select_color(screen, 5);
 
