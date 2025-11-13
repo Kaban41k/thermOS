@@ -1,7 +1,3 @@
-# =============================================================================
-# Variables
-
-# Build tools
 KERNEL_SIZE = 65536
 NASM = nasm -f bin -dKERNEL_SIZE=$(KERNEL_SIZE)
 
