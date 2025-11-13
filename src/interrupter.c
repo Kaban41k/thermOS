@@ -56,8 +56,9 @@ static uchar* generate_trampolines() {
     uchar* trampoline = trampolines + vector * TRAMPOLINE_SIZE;
     u32 offset = 0;
 
-    if (has_error_code(vector))
+    if (has_error_code(vector)) {
       trampoline[offset++] = 0x50; // push eax (if needed)
+    }
     trampoline[offset++] = 0x6A;   // push const
     trampoline[offset++] = vector; //      const = vector
     trampoline[offset++] = 0xE9;   // jmp ...
