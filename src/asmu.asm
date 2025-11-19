@@ -4,8 +4,8 @@ inf_loop:
 
 [GLOBAL cli]
 cli:
-    cli
-    ret
+  cli
+  ret
 
 [GLOBAL sti]
 sti:
@@ -42,7 +42,7 @@ int_n:
 
 
 extern universal_handler
-global collect_context
+[GLOBAL collect_context]
 collect_context:
   ; context
   push ds
@@ -78,3 +78,16 @@ collect_context:
   pop ds
   add esp, 8
   iret
+
+[GLOBAL port_read]
+port_read:
+  mov edx, [esp + 4]
+  in al, dx
+  ret
+
+[GLOBAL port_write]
+port_write:
+  mov edx, [esp + 4]
+  mov eax, [esp + 8]
+  out dx, al
+  ret
