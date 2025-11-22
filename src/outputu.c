@@ -99,7 +99,6 @@ void print_int(u32 n, u16 base) {
     n /= base;
   }
   
-
   for (u16 i = 0; i < l; i++)
     print_char(buf[l - i - 1]);
 }

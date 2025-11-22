@@ -1,9 +1,7 @@
 #include <stdarg.h>
+#include "asmu.h"
 #include "vgau.h"
 #include "outputu.h"
-
-extern void inf_loop();
-extern void cli();
 
 void vkernel_panic(const char* fmt, va_list args) {
   cli();

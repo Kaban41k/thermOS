@@ -116,20 +116,6 @@ next:
 extern kernel_entry
 call kernel_entry
 
-[GLOBAL inf_loop]
-inf_loop:
-  jmp inf_loop
-
-[GLOBAL cli]
-cli:
-    cli
-    ret
-
-[GLOBAL sti]
-sti:
-  sti
-  ret
-
 gdt_descriptor:
   dw gdt_end - gdt - 1  ; gdt_size - 1
   dd gdt                ; gdt base address
