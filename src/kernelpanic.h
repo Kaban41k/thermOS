@@ -5,6 +5,7 @@
 
 #include <stdarg.h>
 #include "types.h"
+#include "interrupter.h"
 
 /*
   Is called when a critical error is detected.
@@ -17,5 +18,16 @@
 */
 
 void kernel_panic(const char* fmt, ...);
+
+/*
+  Is called when a critical error is detected.
+  The function clears the screen, displays context of error,
+  and goes into an eternal loop.
+
+  
+  interrupt_context* context : error context
+*/
+
+void kernel_panic_ctx(interrupt_context* context);
 
 #endif

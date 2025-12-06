@@ -26,16 +26,6 @@ typedef struct {
   u16    offset_high;
 } interrupt_descriptor;
 
-typedef struct interrupt_context {
-  u32 edi, esi, ebp, esp, ebx, edx, ecx, eax;
-  alignas(4) u16 gs, fs, es, ds;
-  alignas(4) uchar vector;
-  u32 error_code;
-  u32 eip;
-  alignas(4) u16 cs;
-  u32 eflags;
-} interrupt_context;
-
 static_assert(sizeof(interrupt_descriptor) == 8);
 static_assert(sizeof(interrupt_context) == 17 * sizeof(u32));
 
@@ -195,28 +185,12 @@ void global_plus() {
   printf("%d ", global++);
 }
 
-void kernel_panic_ctx(interrupt_context* context) {
-  kernel_panic(
-        "unhandled interrupt #%x at %R:%R\n\n"
-        "Registers: \n"
-        "  EAX: %R,  EBX: %R,  ECX: %R,  EDX: %R,\n"
-        "  EDI: %R,  ESI: %R,  ESP: %R,  EBP: %R,\n"
-        "  DS : %R,  ES : %R,  GS : %R,  FS : %R\n\n"
-        "Error code: %R\n\n"
-        "EFLAGS: %R\n",
-        context->vector, context->cs, context->eip, context->eax, context->ebx, context->ecx, context->edx,
-        context->edi, context->esi, context->esp, context->ebp, context->ds, context->es, context->gs, context->fs, 
-        context->error_code,
-        context->eflags
-      );
-}
-
 void timer_handler(struct interrupt_context* context) {
-  TIMER_20;
+  TIMER_2;
 }
 
 void keyboard_handler(struct interrupt_context* context) {
-  KEYBOARD_20;
+  KEYBOARD_2;
 }
 
 void universal_handler(interrupt_context* context) {

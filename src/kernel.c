@@ -15,7 +15,7 @@ void kernel_entry() {
   win_clear(main);
   select_win(&main);
 
-  EXPERIMENT_20;
+  EXPERIMENT_2;
  
   inf_loop();
 }
