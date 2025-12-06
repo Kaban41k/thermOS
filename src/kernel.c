@@ -5,12 +5,9 @@
 #include "assert.h"
 #include "alloc.h"
 #include "interrupter.h"
+#include "controllertests.h"
   
 void kernel_entry() {
-  init_interrupter();
-  init_pic8259_master(true);
-  init_pic8259_slave();
-
   vga_clear_screen();
   vga_fill_screen('#');
   Window main = create_window(76, 21, 2, 2);
@@ -18,15 +15,7 @@ void kernel_entry() {
   win_clear(main);
   select_win(&main);
 
-
-  pic8259_enable_device(SYSTEM_TIMER);
-  pic8259_enable_device(KEYBOARD);
-
-  sti();
- 
-  for (u64 i = 0; i < 1000000; i++) {
-    //global_plus();
-  }
+  EXPERIMENT_20;
  
   inf_loop();
 }

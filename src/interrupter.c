@@ -5,15 +5,11 @@
 #include "kernelpanic.h"
 #include "alloc.h"
 #include "interrupter.h"
+#include "controllerconf.h"
+#include "controllertests.h"
 
 #define TRAMPOLINE_SIZE     8
 #define VECTORS_N           256
-
-#define MASTER_COMMAND_PORT 0x20
-#define MASTER_DATA_PORT    0x21
-#define SLAVE_COMMAND_PORT  0xA0
-#define SLAVE_DATA_PORT     0xA1
-#define DELAY_PORT          0x80
 
 u32 global = 0;
 
@@ -79,7 +75,7 @@ static uchar* generate_trampolines() {
   return trampolines;
 }
 
-static void* generate_idt(uchar* trampolines) {
+static void* generate_idt(uchar* trampolines, InterruptType type) {
   interrupt_descriptor* idt = 
     (interrupt_descriptor*) malloc_immortal(sizeof(interrupt_descriptor) * VECTORS_N, sizeof(interrupt_descriptor));
 
@@ -90,11 +86,7 @@ static void* generate_idt(uchar* trampolines) {
     idt[vector].seg_selector  = 0x8;
     idt[vector].reserved      = 0b0;
     idt[vector].zeros         = 0b000;
-    idt[vector].type          = 0b110;
-
-    // №111819 $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-    // idt[vector].type          = 0b111;
-
+    idt[vector].type          = type;
     idt[vector].d             = 0b1;
     idt[vector].zero          = 0b0;
     idt[vector].dpl           = 0b00;
@@ -106,9 +98,9 @@ static void* generate_idt(uchar* trampolines) {
   return idt;
 }
 
-void init_interrupter() {
+void init_interrupter(InterruptType type) {
   uchar* trampolines = generate_trampolines();
-  void* idt = generate_idt(trampolines);
+  void* idt = generate_idt(trampolines, type);
   u16 idt_limit = VECTORS_N * sizeof(interrupt_descriptor) - 1;
   u64 idt_ret = ((u64) idt << 16) | idt_limit; 
   lidt(&idt_ret);
@@ -117,32 +109,72 @@ void init_interrupter() {
 bool auto_eoi_defined = false;
 bool auto_eoi;
 
+void configure_controller(Controller controller, uchar words[]) {
+  uchar command_port, data_port;
+  
+  if (controller == MASTER) {
+    command_port = MASTER_COMMAND_PORT;
+    data_port = MASTER_DATA_PORT;
+  } else {
+    command_port = SLAVE_COMMAND_PORT;
+    data_port = SLAVE_DATA_PORT;
+  }
+  
+  // disable interrupts
+  port_write(data_port,  0b11111111);
+
+  // ICW1
+  port_write(command_port,  words[0]);
+  
+  // ICW2
+  port_write(data_port,  words[1]);
+  
+  // ICW3
+  port_write(data_port,  words[2]);
+  
+  // ICW4
+  port_write(data_port,  (uchar) auto_eoi << 1 | 1);
+}
+
 void init_pic8259_master(bool aeoi) {
   auto_eoi_defined = true;
   auto_eoi = aeoi;
 
-  port_write(MASTER_DATA_PORT, 0b11111111);
-
-  port_write(MASTER_COMMAND_PORT, 0b00010001);
-  port_write(MASTER_DATA_PORT, 0x20);
-  port_write(MASTER_DATA_PORT, 0b00000100);
-  port_write(MASTER_DATA_PORT, (uchar) auto_eoi << 1 | 1);
+  configure_controller(MASTER, MASTER_WORDS);
 }
 
 void init_pic8259_slave() {
   assert(auto_eoi_defined == true);
 
-  port_write(SLAVE_DATA_PORT,  0b11111111);
-
-  port_write(SLAVE_COMMAND_PORT,  0b00010001);
-  port_write(SLAVE_DATA_PORT,  0x28);
-  port_write(SLAVE_DATA_PORT,  0b00000010);
-  port_write(SLAVE_DATA_PORT,  (uchar) auto_eoi << 1 | 1);
+  configure_controller(SLAVE, SLAVE_WORDS);
 }
 
 void pic8259_enable_device(Device device) {
-    uchar mask = port_read(MASTER_DATA_PORT);
-    port_write(MASTER_DATA_PORT, ~(1 << device) & mask);
+  uchar port;
+
+  if (device <= 8) {
+    port = MASTER_DATA_PORT;
+  } else {
+    device -= 8;
+    port = SLAVE_DATA_PORT;
+  }
+
+  uchar mask = port_read(port);
+  port_write(port, ~(1 << device) & mask);
+}
+
+void pic8259_disable_device(Device device) {
+  uchar port;
+
+  if (device <= 8) {
+    port = MASTER_DATA_PORT;
+  } else {
+    device -= 8;
+    port = SLAVE_DATA_PORT;
+  }
+
+  uchar mask = port_read(port);
+  port_write(port, ~(1 << device) | mask);
 }
 
 void pic8259_send_EOI() {
@@ -180,98 +212,11 @@ void kernel_panic_ctx(interrupt_context* context) {
 }
 
 void timer_handler(struct interrupt_context* context) {
-  // №2 -----------------------
-  // kernel_panic_ctx(context);
-  
-  // №4678141617 ##############
-  // printf("%d ", global++);
- 
-  // №5 -----------------------
-  // global = 0;
-
-  // №9 -----------------------
-  /*
-  printf("%d ", global++);
-  pic8259_send_EOI();
-  sti();
-  inf_loop();
-  */
-
-  // №10 ----------------------
-  /*
-  printf("%d ", global++);
-  if (global < 100) {
-    pic8259_send_EOI();
-    sti();
-  }
-  inf_loop();
-  */
-
-  // №11 ----------------------
-  /*
-  printf("%d ", global++);
-  if (global < 100){
-    pic8259_send_EOI();
-  }
-  inf_loop();
-  */
-
-  // №12 ----------------------
-  /*
-  printf("%d ", global++);
-  if (global < 100){
-    sti();
-  }
-  inf_loop();
-  */
-
-  // №1518 ------------------
-  // printf("%d ", global++);
-  // inf_loop();
-
-  // №19 ----------------------
-  // printf("%d ", global++);
-  // pic8259_send_EOI();
-
-  // №20 ----------------------
-  port_write(MASTER_DATA_PORT, ~2); // disable timer
-  printf("delay 1\n");
-  delay(10000);
-  sti();
-  printf("delay 2\n");
-  delay(10000);
-  printf("end :)");
-
-  return;
+  TIMER_20;
 }
 
 void keyboard_handler(struct interrupt_context* context) {
-  // №3 -----------------------
-  // kernel_panic_ctx(context);
-
-  // №1314
-  // printf("%c ", port_read(0x60));
-
-  // №1620
-  printf("%c ", port_read(0x60));
-  inf_loop();
-
-  // №17
-  /*
-  printf("%c ", port_read(0x60));
-  sti();
-  inf_loop();
-  */
-
-  // №18
-  // printf("%c ", port_read(0x60));
-  // pic8259_send_EOI();
-
-  // №19
-  // printf("%c ", port_read(0x60));
-  // inf_loop();
-
-  return;
+  KEYBOARD_20;
 }
 
 void universal_handler(interrupt_context* context) {
