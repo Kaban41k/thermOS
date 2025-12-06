@@ -11,6 +11,15 @@
 #define TRAMPOLINE_SIZE     8
 #define VECTORS_N           256
 
+#define KERNEL_PANIC_CONTEXT_STRING             \
+  "unhandled interrupt #%x at %R:%R\n\n"        \
+  "Registers: \n"                               \
+  "  EAX: %R,  EBX: %R,  ECX: %R,  EDX: %R,\n"  \
+  "  EDI: %R,  ESI: %R,  ESP: %R,  EBP: %R,\n"  \
+  "  DS : %R,  ES : %R,  GS : %R,  FS : %R\n\n" \
+  "Error code: %R\n\n"                          \
+  "EFLAGS: %R\n"
+
 u32 global = 0;
 
 typedef struct {
@@ -185,12 +194,21 @@ void global_plus() {
   printf("%d ", global++);
 }
 
+void kernel_panic_ctx(interrupt_context* context) {
+  kernel_panic(KERNEL_PANIC_CONTEXT_STRING,
+        context->vector, context->cs, context->eip, context->eax, context->ebx, context->ecx, context->edx,
+        context->edi, context->esi, context->esp, context->ebp, context->ds, context->es, context->gs, context->fs, 
+        context->error_code,
+        context->eflags
+      );
+}
+
 void timer_handler(struct interrupt_context* context) {
-  TIMER_2;
+  TIMER_20;
 }
 
 void keyboard_handler(struct interrupt_context* context) {
-  KEYBOARD_2;
+  KEYBOARD_20;
 }
 
 void universal_handler(interrupt_context* context) {
