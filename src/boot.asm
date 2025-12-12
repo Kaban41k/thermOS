@@ -109,7 +109,7 @@ next:
   mov fs, eax
   mov gs, eax
 
-  mov esp, 0x7C00 - 12 ; Hello from System V ABI (Stack alignment n % 16 == 4)
+  mov esp, 0x7C00 ; Hello from System V ABI (Stack alignment n % 16 == 4)
 
 extern kernel_entry
 call kernel_entry
