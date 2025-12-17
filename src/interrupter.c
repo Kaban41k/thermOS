@@ -108,7 +108,7 @@ void init_interrupter(InterruptType type) {
 bool auto_eoi_defined = false;
 bool auto_eoi;
 
-void configure_controller(Controller controller, uchar words[]) {
+void configure_controller(Controller controller, const uchar words[]) {
   uchar command_port, data_port;
   
   if (controller == MASTER) {
@@ -135,7 +135,7 @@ void configure_controller(Controller controller, uchar words[]) {
   port_write(data_port,  (uchar) auto_eoi << 1 | 1);
 }
 
-void init_pic8259_master(bool aeoi) {
+void init_pic8259_master(EoiMode aeoi) {
   auto_eoi_defined = true;
   auto_eoi = aeoi;
 
@@ -204,11 +204,11 @@ void kernel_panic_ctx(interrupt_context* context) {
 }
 
 void timer_handler(struct interrupt_context* context) {
-  TIMER_20;
+
 }
 
 void keyboard_handler(struct interrupt_context* context) {
-  KEYBOARD_20;
+  
 }
 
 void universal_handler(interrupt_context* context) {

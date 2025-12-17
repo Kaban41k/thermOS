@@ -18,6 +18,18 @@ lidt:
   lidt [eax]
   ret
 
+[GLOBAL ltr]
+ltr:
+  mov ax, 0x28
+  ltr ax
+  ret
+
+[GLOBAL get_eflags]
+get_eflags:
+  pushfd
+  pop eax
+  ret
+
 [GLOBAL set_regs]
 set_regs:
   mov eax, 0
@@ -39,7 +51,6 @@ div_zero:
 int_n:
   int 0x2
   ret
-
 
 extern universal_handler
 [GLOBAL collect_context]
@@ -91,3 +102,30 @@ port_write:
   mov eax, [esp + 8]
   out dx, al
   ret
+
+USERSPACE_CODE_SEGMENT equ 0x1B
+USERSPACE_DATA_SEGMENT equ 0x23
+
+[GLOBAL userspace_process]
+userspace_process:
+  mov eax, [esp + 4] ; entry
+  mov ecx, [esp + 8] ; stack
+
+  push USERSPACE_DATA_SEGMENT
+  push ecx
+  pushfd
+  pop ecx
+  and ecx, 0xFFFFCFFF
+  or ecx, 0x00000200
+  push ecx
+  push USERSPACE_CODE_SEGMENT
+  push eax
+
+  mov eax, USERSPACE_DATA_SEGMENT
+  mov ds, eax
+  mov es, eax
+  mov fs, eax
+  mov gs, eax
+
+  iret
+
