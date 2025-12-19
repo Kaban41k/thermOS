@@ -27,7 +27,7 @@ void setup_tss() {
   tss_descriptor.type       = 0b1001;
   tss_descriptor.s          = 0b0;
   tss_descriptor.dpl        = 0b00;
-  tss_descriptor.present    = 0b1;
+  tss_descriptor.p          = 0b1;
   tss_descriptor.limit_high = 0x0;
   tss_descriptor.avl        = 0b0;
   tss_descriptor.zero       = 0b0;

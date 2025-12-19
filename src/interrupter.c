@@ -6,7 +6,7 @@
 #include "alloc.h"
 #include "interrupter.h"
 #include "controllerconf.h"
-#include "controllertests.h"
+#include "userspacetests.h"
 
 #define TRAMPOLINE_SIZE     8
 #define VECTORS_N           256
@@ -19,8 +19,6 @@
   "  DS : %R,  ES : %R,  GS : %R,  FS : %R\n\n" \
   "Error code: %R\n\n"                          \
   "EFLAGS: %R\n"
-
-u32 global = 0;
 
 typedef struct {
   u16    offset_low;
@@ -189,11 +187,6 @@ void delay(u16 n) {
   }
 }
 
-void global_plus() {
-  delay(10);
-  printf("%d ", global++);
-}
-
 void kernel_panic_ctx(interrupt_context* context) {
   kernel_panic(KERNEL_PANIC_CONTEXT_STRING,
         context->vector, context->cs, context->eip, context->eax, context->ebx, context->ecx, context->edx,
@@ -203,8 +196,14 @@ void kernel_panic_ctx(interrupt_context* context) {
       );
 }
 
-void timer_handler(struct interrupt_context* context) {
+u32 global = 0;
 
+void global_plus() {
+  printf("%d ", ++global);
+}
+
+void timer_handler(struct interrupt_context* context) {
+  TIMER_9
 }
 
 void keyboard_handler(struct interrupt_context* context) {

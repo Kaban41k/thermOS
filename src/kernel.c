@@ -6,6 +6,7 @@
 #include "alloc.h"
 #include "interrupter.h"
 #include "userspaceu.h"
+#include "userspacetests.h"
 
 #define USERSPACE_STACK_SIZE 1024
 
@@ -14,14 +15,13 @@ void setup_interrupter(InterruptType type, EoiMode mode);
 
 Window main_window;
 
+extern segment_descriptor kernel_code_segment_descriptor;
+
 void user_main() {
-  printf("I'M USER OH YEAH");
-  inf_loop();
+  USER_PROCESS_9
 }
 
 void kernel_main() {
-  win_clear(main_window);
-
   void* userspace_stack = malloc_immortal(USERSPACE_STACK_SIZE, 16) + USERSPACE_STACK_SIZE;
 
   userspace_process(user_main, userspace_stack);

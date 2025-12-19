@@ -124,6 +124,7 @@ align 8
 gdt:      ; global descriptor table
   .null:                dq 0
   
+  [GLOBAL kernel_code_segment_descriptor]
   kernel_code_segment_descriptor:
     .limitLo:           dw 0xFFFF
     .baseLo:            dw 0x0

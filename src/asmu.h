@@ -12,6 +12,7 @@ void set_regs();
 void div_zero();
 void int_n();
 void collect_context();
+u32 get_esp();
 
 uchar port_read(u16 port);
 void port_write(u16 port, uchar data);

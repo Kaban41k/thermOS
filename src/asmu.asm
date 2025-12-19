@@ -52,6 +52,11 @@ int_n:
   int 0x2
   ret
 
+[GLOBAL get_esp]
+get_esp:
+  mov eax, esp
+  ret
+
 extern universal_handler
 [GLOBAL collect_context]
 collect_context:

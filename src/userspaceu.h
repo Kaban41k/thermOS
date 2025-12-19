@@ -12,7 +12,7 @@ typedef struct {
   uchar type       : 4;
   uchar s          : 1;
   uchar dpl        : 2;
-  uchar present    : 1;
+  uchar p          : 1;
   uchar limit_high : 4;
   uchar avl        : 1;
   uchar zero       : 1;
