@@ -18,7 +18,7 @@ Window main_window;
 extern segment_descriptor kernel_code_segment_descriptor;
 
 void user_main() {
-  USER_PROCESS_9
+  USER_PROCESS_10
 }
 
 void kernel_main() {

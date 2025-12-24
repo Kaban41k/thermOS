@@ -32,6 +32,8 @@ typedef struct {
   u32 edi, esi, ebp, esp, ebx, edx, ecx, eax;
   alignas(4) u16 ldtss, gs, fs, ds, ss, cs, es;
   u16 r_2;
+  u16 io_map_base_address;
+  u32 ssp;
 } TSS;
 
 void setup_tss();

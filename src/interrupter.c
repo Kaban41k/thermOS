@@ -92,6 +92,8 @@ static void* generate_idt(uchar* trampolines, InterruptType type) {
     assert(sizeof(idt[vector]) == 8);
   }
 
+  idt[0xFA].dpl = 0b11;
+
   return idt;
 }
 
@@ -198,16 +200,20 @@ void kernel_panic_ctx(interrupt_context* context) {
 
 u32 global = 0;
 
-void global_plus() {
-  printf("%d ", ++global);
+u32 global_plus() {
+  return ++global;
 }
 
 void timer_handler(struct interrupt_context* context) {
-  TIMER_9
+  TIMER_10
 }
 
 void keyboard_handler(struct interrupt_context* context) {
   
+}
+
+void user_handler(struct interrupt_context* context) {
+  printf("%d ", context->eax);
 }
 
 void universal_handler(interrupt_context* context) {
@@ -217,6 +223,9 @@ void universal_handler(interrupt_context* context) {
       break;
     case 0x21:
       keyboard_handler(context);
+      break;
+    case 0xFA:
+      user_handler(context);
       break;
     default:
       kernel_panic_ctx(context);

@@ -18,9 +18,11 @@ lidt:
   lidt [eax]
   ret
 
+TSS_SEGMENT equ 0x28
+
 [GLOBAL ltr]
 ltr:
-  mov ax, 0x28
+  mov ax, TSS_SEGMENT
   ltr ax
   ret
 
@@ -108,23 +110,28 @@ port_write:
   out dx, al
   ret
 
-USERSPACE_CODE_SEGMENT equ 0x1B
-USERSPACE_DATA_SEGMENT equ 0x23
+RPL3                   equ 0x3 
+USERSPACE_CODE_SEGMENT equ (0x18 | RPL3)
+USERSPACE_DATA_SEGMENT equ (0x20 | RPL3)
 
 [GLOBAL userspace_process]
 userspace_process:
   mov eax, [esp + 4] ; entry
   mov ecx, [esp + 8] ; stack
 
-  push USERSPACE_DATA_SEGMENT
-  push ecx
-  pushfd
+  ; context for jmp in userspace with iret
+
+  push USERSPACE_DATA_SEGMENT ; SS
+  push ecx                    ; esp
+  pushfd                      ; EFLAGS
+  
   pop ecx
-  and ecx, 0xFFFFCFFF
-  or ecx, 0x00000200
+  and ecx, 0xFFFFCFFF         ; IOPL == 0
+  or ecx, 0x00000200          ; IF == 1
   push ecx
-  push USERSPACE_CODE_SEGMENT
-  push eax
+  
+  push USERSPACE_CODE_SEGMENT ; CS
+  push eax                    ; EIP
 
   mov eax, USERSPACE_DATA_SEGMENT
   mov ds, eax
@@ -134,3 +141,7 @@ userspace_process:
 
   iret
 
+[GLOBAL userspace_syscall]
+userspace_syscall:
+  int 0xFA
+  ret

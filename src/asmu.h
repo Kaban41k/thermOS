@@ -18,5 +18,6 @@ uchar port_read(u16 port);
 void port_write(u16 port, uchar data);
 
 void userspace_process(void (*entry)(), void* stack);
+void userspace_syscall(u32 n);
 
 #endif

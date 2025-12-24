@@ -33,6 +33,6 @@ void pic8259_enable_device(Device device);
 void pic8259_disable_device(Device device);
 void pic8259_send_EOI();
 void delay(u16 n);
-void global_plus();
+u32 global_plus();
 
 #endif
