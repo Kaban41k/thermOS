@@ -26,13 +26,11 @@ void kernel_entry() {
 
   printf("boom");
 
-  set_regs();
-  //collect_context();
-  div_zero();
+  //div_zero();
   //int_n();
-  //sti();
+  sti();
 
-  //inf_loop();
+  inf_loop();
 }
 
 void test() {

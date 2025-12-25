@@ -9,7 +9,7 @@ static void* VGA_BUF = (void*) 0xB8000;
 
 // -----VGA-----
 char* vga_get_char_ptr(u32 x, u32 y) {
-	return (char*) VGA_BUF + 2 * (y * 80 + x);
+	return (char*) VGA_BUF + 2 * (y * VGA_X_SIZE + x);
 }
 
 void vga_fill_screen(char c) {
@@ -45,7 +45,7 @@ Window create_window(u32 x_size, u32 y_size, u32 x_offset, u32 y_offset) {
 }
 
 char* win_get_char_ptr(Window win, u32 x, u32 y) {
-	return (char*) win.ptr + 2 * (y * 80 + x);
+	return (char*) win.ptr + 2 * (y * VGA_X_SIZE + x);
 }
 
 char* win_clear(Window win) {
