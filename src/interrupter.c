@@ -183,7 +183,7 @@ void pic8259_disable_device(Device device) {
   }
 
   uchar mask = port_read(port);
-  port_write(port, ~(1 << device) | mask);
+  port_write(port, (1 << device) | mask);
 }
 
 void pic8259_send_EOI() {
