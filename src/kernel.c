@@ -3,12 +3,25 @@
 #include "outputu.h"
 #include "assert.h"
 #include "alloc.h"
+#include "memu.h"
 
 extern void inf_loop();
 
+void test();
+void test2();
+void kernel_main();
+
 void kernel_entry() {
   vga_clear_screen();
-  Window main = create_window(60, 40, 2, 2);
+  
+  kernel_main();
+
+  inf_loop();
+}
+
+void kernel_main() {
+  vga_fill_screen('#');
+  Window main = create_window(60, 23, 2, 1);
 
   win_select_color(main, 0x2);
   
@@ -18,8 +31,20 @@ void kernel_entry() {
     void* obj = malloc_immortal(i*3, i);
     printf("%d byte object, alignment: %d, address: %x\n", i*10, i, (size_t) obj);
   }
+}
 
-  inf_loop();
+void test2() {
+  memzero((void*) 0xB8000, 0xFA0);
+
+  vga_fill_screen('#');
+  Window main = create_window(70, 20, 2, 2);
+
+  win_select_color(main, 0x2);
+
+
+  vga_fill_screen('#');
+  select_win(&main);
+  printf("Hello!");
 }
 
 void test() {
@@ -44,7 +69,7 @@ void test() {
 
   printf("a");
 
-  for (int i = 0; i < 100; i++) {
+  for (int i = 0; i < 1000; i++) {
     select_win(&win1);
     char* s = "seg";
     printf("%s\n", s);

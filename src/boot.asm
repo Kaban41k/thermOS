@@ -111,7 +111,7 @@ next:
   mov fs, eax
   mov gs, eax
 
-  mov esp, 0x7C00 - 12 ; Hello from System V ABI (Stack alignment n % 16 == 4)
+  mov esp, 0x7C00
 
 extern kernel_entry
 call kernel_entry
@@ -138,7 +138,7 @@ align 8
 gdt:      ; global descriptor table
   .null:                dq 0
   csd:
-    .limitLo:           dw 0xFF
+    .limitLo:           dw 0xFFFF
     .baseLo:            dw 0x0
     .baseMid:           db 0x0
     .P_DPL_S_type:      db 0b10011010
@@ -146,7 +146,7 @@ gdt:      ; global descriptor table
     .baseHi:            db 0x0
 
   dsd:
-    .limitLo:           dw 0xFF
+    .limitLo:           dw 0xFFFF
     .baseLo:            dw 0x0
     .baseMid:           db 0x0
     .P_DPL_S_type:      db 0b10010010
