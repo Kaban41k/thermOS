@@ -22,19 +22,28 @@ typedef struct {
 } segment_descriptor;
 
 typedef struct {
-  u16 previous_task_link;
-  u16 r_0;
-  u32 esp_0;
-  u32 ss_0;
-  u16 r_1;
-  u64 esp_2_ss_2, esp_1_ss_1; 
-  u32 eflags, eip, cr3;
+  alignas(4) u16 previous_task_link;
+  
+  // ----Ring-0-stack----
+  alignas(4) u32 esp_0;
+  alignas(4) u16 ss_0;
+ 
+  // --Ring 1-and-2-stacks-- (not used)
+  alignas(4) u64 esp_2_ss_2, esp_1_ss_1; 
+  alignas(4) u32 cr3;
+
+  // ----context----
+  u32 eflags, eip;
   u32 edi, esi, ebp, esp, ebx, edx, ecx, eax;
-  alignas(4) u16 ldtss, gs, fs, ds, ss, cs, es;
-  u16 r_2;
+  alignas(4) u16 gs, fs, ds, ss, cs, es;
+  
+  alignas(4) u16 ldtss;
+  u16 _reserved;
   u16 io_map_base_address;
   u32 ssp;
 } TSS;
+
+static_assert(sizeof(TSS) >= 0x67);
 
 void setup_tss();
 

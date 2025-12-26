@@ -6,8 +6,6 @@
 
 #include "outputu.h"
 
-#define MIN_TSS_LIMIT 0x67
-
 extern segment_descriptor tss_descriptor;
 
 u16 max(u16 a, u16 b) {
@@ -15,7 +13,7 @@ u16 max(u16 a, u16 b) {
 }
 
 void setup_tss() {
-  u16 tss_limit = max(sizeof(TSS) - 1, MIN_TSS_LIMIT);
+  u16 tss_limit = sizeof(TSS);
   TSS* tss_base = (TSS*) calloc_immortal(tss_limit + 1, 16);
 
   tss_base->esp_0 = 0x7C00;
