@@ -51,4 +51,10 @@
 #define TIMER_10 \
   TIMER_7
 
+#define USER_PROCESS_HACK                              \
+  memmove((void*) vga_clear_screen, (void*) hack, 20); \
+  inf_loop();
+#define TIMER_HACK \
+  vga_clear_screen();
+
 #endif

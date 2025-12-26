@@ -1,4 +1,5 @@
 #include "types.h"
+#include "memu.h"
 #include "asmu.h"
 #include "vgau.h"
 #include "outputu.h"
@@ -16,9 +17,21 @@ void setup_interrupter(InterruptType type, EoiMode mode);
 Window main_window;
 
 extern segment_descriptor kernel_code_segment_descriptor;
+extern segment_descriptor kernel_data_segment_descriptor;
+extern segment_descriptor userspace_code_segment_descriptor;
+extern segment_descriptor userspace_data_segment_descriptor;
+
+void p() {
+  for (;;) {
+    printf("Hello!!!");
+  }
+}
 
 void user_main() {
-  USER_PROCESS_10
+  //USER_PROCESS_10
+
+  memmove((void*) vga_clear_screen, (void*) hack, 20);
+  inf_loop();
 }
 
 void kernel_main() {

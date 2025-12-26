@@ -145,3 +145,10 @@ userspace_process:
 userspace_syscall:
   int 0xFA
   ret
+
+extern p
+[GLOBAL hack]
+hack:
+  mov eax, p
+  call eax
+  

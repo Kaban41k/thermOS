@@ -205,7 +205,8 @@ u32 global_plus() {
 }
 
 void timer_handler(struct interrupt_context* context) {
-  TIMER_10
+  printf("t ");
+  TIMER_HACK
 }
 
 void keyboard_handler(struct interrupt_context* context) {

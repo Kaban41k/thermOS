@@ -20,4 +20,6 @@ void port_write(u16 port, uchar data);
 void userspace_process(void (*entry)(), void* stack);
 void userspace_syscall(u32 n);
 
+void hack();
+
 #endif

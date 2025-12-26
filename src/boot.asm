@@ -141,6 +141,7 @@ gdt:      ; global descriptor table
     .G_B_0_AVL_limitHi: db 0b11001111
     .baseHi:            db 0x0
   
+  [GLOBAL userspace_code_segment_descriptor]
   userspace_code_segment_descriptor:
     .limitLo:           dw 0xFFFF
     .baseLo:            dw 0x0
@@ -149,6 +150,7 @@ gdt:      ; global descriptor table
     .G_B_0_AVL_limitHi: db 0b11001111
     .baseHi:            db 0x0
 
+  [GLOBAL userspace_data_segment_descriptor]
   userspace_data_segment_descriptor:
     .limitLo:           dw 0xFFFF
     .baseLo:            dw 0x0
