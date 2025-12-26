@@ -18,6 +18,7 @@ void setup_tss() {
 
   tss_base->esp_0 = 0x7C00;
   tss_base->ss_0 = KERNEL_DATA_SEGMENT;
+  tss_base->io_map_base_address = sizeof(TSS) + 32;
 
   tss_descriptor.limit_low  = tss_limit;
   tss_descriptor.base_low   = (u32) tss_base & 0xFFFF;
