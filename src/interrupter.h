@@ -11,21 +11,6 @@ typedef enum {
   TRAP_GATE = 0b111
 } InterruptType;
 
-typedef enum {
-  MANUAL_EOI, 
-  AUTO_EOI
-} EoiMode;
-
-typedef struct interrupt_context {
-  u32 edi, esi, ebp, esp, ebx, edx, ecx, eax;
-  alignas(4) u16 gs, fs, es, ds;
-  alignas(4) uchar vector;
-  u32 error_code;
-  u32 eip;
-  alignas(4) u16 cs;
-  u32 eflags;
-} interrupt_context;
-
 void init_interrupter(InterruptType type);
 void init_pic8259_master(EoiMode auto_eoi);
 void init_pic8259_slave();

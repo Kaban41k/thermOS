@@ -33,6 +33,16 @@ typedef struct {
   u16    offset_high;
 } interrupt_descriptor;
 
+typedef struct interrupt_context {
+  u32 edi, esi, ebp, esp, ebx, edx, ecx, eax;
+  alignas(4) u16 gs, fs, es, ds;
+  alignas(4) uchar vector;
+  u32 error_code;
+  u32 eip;
+  alignas(4) u16 cs;
+  u32 eflags;
+} interrupt_context;
+
 static_assert(sizeof(interrupt_descriptor) == 8);
 static_assert(sizeof(interrupt_context) == 17 * sizeof(u32));
 
@@ -173,7 +183,7 @@ void pic8259_disable_device(Device device) {
   }
 
   uchar mask = port_read(port);
-  port_write(port, ~(1 << device) | mask);
+  port_write(port, (1 << device) | mask);
 }
 
 void pic8259_send_EOI() {
