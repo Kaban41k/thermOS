@@ -1,11 +1,24 @@
 #include "types.h"
 #include "asmu.h"
 #include "assert.h"
+#include "outputu.h"
 #include "kernelpanic.h"
 #include "alloc.h"
+#include "interrupter.h"
+#include "controllerconf.h"
+#include "userspacetests.h"
 
-#define TRAMPOLINE_SIZE 8
-#define VECTORS_N 256
+#define TRAMPOLINE_SIZE     8
+#define VECTORS_N           256
+
+#define KERNEL_PANIC_CONTEXT_STRING             \
+  "unhandled interrupt #%x at %R:%R\n\n"        \
+  "Registers: \n"                               \
+  "  EAX: %R,  EBX: %R,  ECX: %R,  EDX: %R,\n"  \
+  "  EDI: %R,  ESI: %R,  ESP: %R,  EBP: %R,\n"  \
+  "  DS : %R,  ES : %R,  GS : %R,  FS : %R\n\n" \
+  "Error code: %R\n\n"                          \
+  "EFLAGS: %R\n"
 
 typedef struct {
   u16    offset_low;
@@ -19,16 +32,6 @@ typedef struct {
   uchar  present  : 1;
   u16    offset_high;
 } interrupt_descriptor;
-
-typedef struct interrupt_context {
-  u32 edi, esi, ebp, esp, ebx, edx, ecx, eax;
-  alignas(4) u16 gs, fs, es, ds;
-  alignas(4) uchar vector;
-  u32 error_code;
-  u32 eip;
-  alignas(4) u16 cs;
-  u32 eflags;
-} interrupt_context;
 
 static_assert(sizeof(interrupt_descriptor) == 8);
 static_assert(sizeof(interrupt_context) == 17 * sizeof(u32));
@@ -50,13 +53,13 @@ static bool has_error_code(uchar vector) {
 }
 
 static uchar* generate_trampolines() {
-  uchar* trampolines = (uchar*) malloc_immortal(TRAMPOLINE_SIZE * VECTORS_N, 16);
+  uchar* trampolines = (uchar*) malloc_immortal(TRAMPOLINE_SIZE * VECTORS_N, 8);
 
   for (u16 vector = 0; vector < VECTORS_N; vector++) {
     uchar* trampoline = trampolines + vector * TRAMPOLINE_SIZE;
     u32 offset = 0;
 
-    if (has_error_code(vector)) {
+    if (!has_error_code(vector)) {
       trampoline[offset++] = 0x50; // push eax (if needed)
     }
     trampoline[offset++] = 0x6A;   // push const
@@ -69,7 +72,7 @@ static uchar* generate_trampolines() {
   return trampolines;
 }
 
-static void* generate_idt(uchar* trampolines) {
+static void* generate_idt(uchar* trampolines, InterruptType type) {
   interrupt_descriptor* idt = 
     (interrupt_descriptor*) malloc_immortal(sizeof(interrupt_descriptor) * VECTORS_N, sizeof(interrupt_descriptor));
 
@@ -80,7 +83,7 @@ static void* generate_idt(uchar* trampolines) {
     idt[vector].seg_selector  = 0x8;
     idt[vector].reserved      = 0b0;
     idt[vector].zeros         = 0b000;
-    idt[vector].type          = 0b110;
+    idt[vector].type          = type;
     idt[vector].d             = 0b1;
     idt[vector].zero          = 0b0;
     idt[vector].dpl           = 0b00;
@@ -89,29 +92,143 @@ static void* generate_idt(uchar* trampolines) {
     assert(sizeof(idt[vector]) == 8);
   }
 
+  idt[0xFA].dpl = 0b11;
+
   return idt;
 }
 
-void setup_interrupter() {
+void init_interrupter(InterruptType type) {
   uchar* trampolines = generate_trampolines();
-  void* idt = generate_idt(trampolines);
+  void* idt = generate_idt(trampolines, type);
   u16 idt_limit = VECTORS_N * sizeof(interrupt_descriptor) - 1;
   u64 idt_ret = ((u64) idt << 16) | idt_limit; 
   lidt(&idt_ret);
 }
 
+bool auto_eoi_defined = false;
+bool auto_eoi;
+
+void configure_controller(Controller controller, const uchar words[]) {
+  uchar command_port, data_port;
+  
+  if (controller == MASTER) {
+    command_port = MASTER_COMMAND_PORT;
+    data_port = MASTER_DATA_PORT;
+  } else {
+    command_port = SLAVE_COMMAND_PORT;
+    data_port = SLAVE_DATA_PORT;
+  }
+  
+  // disable interrupts
+  port_write(data_port,  0b11111111);
+
+  // ICW1
+  port_write(command_port,  words[0]);
+  
+  // ICW2
+  port_write(data_port,  words[1]);
+  
+  // ICW3
+  port_write(data_port,  words[2]);
+  
+  // ICW4
+  port_write(data_port,  (uchar) auto_eoi << 1 | 1);
+}
+
+void init_pic8259_master(EoiMode aeoi) {
+  auto_eoi_defined = true;
+  auto_eoi = aeoi;
+
+  configure_controller(MASTER, MASTER_WORDS);
+}
+
+void init_pic8259_slave() {
+  assert(auto_eoi_defined == true);
+
+  configure_controller(SLAVE, SLAVE_WORDS);
+}
+
+void pic8259_enable_device(Device device) {
+  uchar port;
+
+  if (device <= 8) {
+    port = MASTER_DATA_PORT;
+  } else {
+    device -= 8;
+    port = SLAVE_DATA_PORT;
+  }
+
+  uchar mask = port_read(port);
+  port_write(port, ~(1 << device) & mask);
+}
+
+void pic8259_disable_device(Device device) {
+  uchar port;
+
+  if (device <= 8) {
+    port = MASTER_DATA_PORT;
+  } else {
+    device -= 8;
+    port = SLAVE_DATA_PORT;
+  }
+
+  uchar mask = port_read(port);
+  port_write(port, ~(1 << device) | mask);
+}
+
+void pic8259_send_EOI() {
+  assert(!auto_eoi);
+  port_write(MASTER_COMMAND_PORT, 0x20);
+};
+
+void delay(u16 n) {
+  for (u32 i = 0; i < n; i++) {
+    for (u32 j = 0; j < 100; j++) {
+      port_write(DELAY_PORT, DELAY_PORT);
+    }
+  }
+}
+
+void kernel_panic_ctx(interrupt_context* context) {
+  kernel_panic(KERNEL_PANIC_CONTEXT_STRING,
+        context->vector, context->cs, context->eip, context->eax, context->ebx, context->ecx, context->edx,
+        context->edi, context->esi, context->esp, context->ebp, context->ds, context->es, context->gs, context->fs, 
+        context->error_code,
+        context->eflags
+      );
+}
+
+u32 global = 0;
+
+u32 global_plus() {
+  return ++global;
+}
+
+void timer_handler(struct interrupt_context* context) {
+  TIMER_HACK
+}
+
+void keyboard_handler(struct interrupt_context* context) {
+  
+}
+
+void user_handler(struct interrupt_context* context) {
+  printf("%d ", context->eax);
+}
+
 void universal_handler(interrupt_context* context) {
-  kernel_panic(
-    "unhandled interrupt #%x at %R:%R\n\n"
-    "Registers: \n"
-    "  EAX: %R,  EBX: %R,  ECX: %R,  EDX: %R,\n"
-    "  EDI: %R,  ESI: %R,  ESP: %R,  EBP: %R,\n"
-    "  DS : %R,  ES : %R,  GS : %R,  FS : %R\n\n"
-    "Error code: %R\n\n"
-    "EFLAGS: %R\n",
-    context->vector, context->cs, context->eip, context->eax, context->ebx, context->ecx, context->edx,
-    context->edi, context->esi, context->esp, context->ebp, context->ds, context->es, context->gs, context->fs, 
-    context->error_code,
-    context->eflags
-  );
+  switch (context->vector) {
+    case 0x20:
+      timer_handler(context);
+      break;
+    case 0x21:
+      keyboard_handler(context);
+      break;
+    case 0xFA:
+      user_handler(context);
+      break;
+    default:
+      kernel_panic_ctx(context);
+      break;
+  }
 }

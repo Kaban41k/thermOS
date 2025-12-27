@@ -1,85 +1,68 @@
 #include "types.h"
+#include "memu.h"
 #include "asmu.h"
 #include "vgau.h"
 #include "outputu.h"
 #include "assert.h"
 #include "alloc.h"
 #include "interrupter.h"
+#include "userspaceu.h"
+#include "userspacetests.h"
 
-extern void sti();
-extern void inf_loop();
-extern void set_regs();
-extern void div_zero();
-extern void int_n();
+#define USERSPACE_STACK_SIZE 1024
 
-void collect_context();
+void setup_screen();
+void setup_interrupter(InterruptType type, EoiMode mode);
 
-void kernel_entry() {
-  setup_interrupter();
+Window main_window;
 
-  vga_clear_screen();
-  Window main = create_window(60, 40, 2, 2);
+extern segment_descriptor kernel_code_segment_descriptor;
+extern segment_descriptor kernel_data_segment_descriptor;
+extern segment_descriptor userspace_code_segment_descriptor;
+extern segment_descriptor userspace_data_segment_descriptor;
 
-  win_select_color(main, 0x2);
-  
-  select_win(&main);
-
-  printf("boom");
-
-  set_regs();
-  //collect_context();
-  div_zero();
-  //int_n();
-  //sti();
-
-  //inf_loop();
+void p() {
+  for (;;) {
+    printf("Hello!!!");
+  }
 }
 
-void test() {
-  vga_fill_screen('}');
-
-  Window main = create_window(20, 21, 2, 2);
-  Window win1 = create_window(30, 10, 24, 2);
-  Window win2 = create_window(20, 10, 24, 13);
-  Window win3 = create_window(20, 10, 45, 13);
-
-  win_clear(main);
-  win_clear(win1);
-  win_clear(win2);
-  win_clear(win3);
-
-  win_select_color(main, 0x2);
-  win_select_color(win1, 0x4);
-  win_select_color(win2, 0x5);
-  win_select_color(win3, 0x1);
-
-  select_win(&main);  
-
-  printf("a");
-
-  for (int i = 0; i < 100; i++) {
-    select_win(&win1);
-    char* s = "seg";
-    printf("%s\n", s);
-
-    select_win(&win2);
-    int n = 19897;
-    printf("%d\n", n);
-
-
-    n = 158;
-    select_win(&win3);
-    printf("%x\n", n);
-
-
-    select_win(&main);
-
-    char p = i % 200;
-    printf("%c\n", p);
-  }
-
-  assert('a' == 'b');
-
-  printf("%f", &main);
+void user_main() {
+  memmove((void*) vga_clear_screen, (void*) hack, 20);
   inf_loop();
+}
+
+void kernel_main() {
+  void* userspace_stack = malloc_immortal(USERSPACE_STACK_SIZE, 16) + USERSPACE_STACK_SIZE;
+
+  userspace_process(user_main, userspace_stack);
+
+  printf("the end");
+}
+
+void kernel_entry() {
+  setup_screen();
+  setup_interrupter(INTERRUPT_GATE, AUTO_EOI);
+  setup_tss();
+
+  sti();
+
+  kernel_main();
+
+  inf_loop();
+}
+
+void setup_screen() {
+  vga_clear_screen();
+  vga_fill_screen('#');
+  main_window = create_window(76, 21, 2, 2);
+  win_select_color(main_window, 0x2);
+  win_clear(main_window);
+  select_win(&main_window);
+}
+
+void setup_interrupter(InterruptType type, EoiMode mode) {
+  init_interrupter(type);
+  init_pic8259_master(mode);
+  init_pic8259_slave();
 }

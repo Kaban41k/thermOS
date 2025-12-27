@@ -4,8 +4,8 @@
 #include "kernelpanic.h"
 #include "memu.h"
 
-#define ARENA_START 0x7C00 + KERNEL_SIZE
-#define ARENA_END 0x80000
+#define ARENA_START 0x100000
+#define ARENA_END 0x400000
 
 char* ptr = (char*) ARENA_START;
 
