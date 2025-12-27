@@ -82,7 +82,7 @@ collect_context:
   ; align
   mov ebx, esp
   and esp, 0xFFFFFFF0
-  sub esp, 4
+  sub esp, 12
 
   push ebx
   call universal_handler

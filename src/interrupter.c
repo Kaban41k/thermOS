@@ -205,7 +205,6 @@ u32 global_plus() {
 }
 
 void timer_handler(struct interrupt_context* context) {
-  printf("t ");
   TIMER_HACK
 }
 

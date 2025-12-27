@@ -28,10 +28,6 @@ void p() {
 }
 
 void user_main() {
-  //USER_PROCESS_10
-
-  port_write(0x21, 0b11111111);
-
   memmove((void*) vga_clear_screen, (void*) hack, 20);
   inf_loop();
 }
