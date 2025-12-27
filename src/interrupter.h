@@ -12,12 +12,12 @@ typedef enum {
 } InterruptType;
 
 void init_interrupter(InterruptType type);
-void init_pic8259_master(bool auto_eoi);
+void init_pic8259_master(EoiMode auto_eoi);
 void init_pic8259_slave();
 void pic8259_enable_device(Device device);
 void pic8259_disable_device(Device device);
 void pic8259_send_EOI();
 void delay(u16 n);
-void global_plus();
+u32 global_plus();
 
 #endif

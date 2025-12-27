@@ -173,7 +173,10 @@ void vprintf(const char* fmt, va_list args) {
         }
         
         case 'd': {
-          i32 n = va_arg(args, i32); 
+          i32 n = va_arg(args, i32);
+          if (n == 0) {
+            print_s("GOTCHA!");
+          }
           print_d(n);
           continue;
         }

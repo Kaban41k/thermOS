@@ -6,7 +6,7 @@
 #include "alloc.h"
 #include "interrupter.h"
 #include "controllerconf.h"
-#include "controllertests.h"
+#include "userspacetests.h"
 
 #define TRAMPOLINE_SIZE     8
 #define VECTORS_N           256
@@ -19,8 +19,6 @@
   "  DS : %R,  ES : %R,  GS : %R,  FS : %R\n\n" \
   "Error code: %R\n\n"                          \
   "EFLAGS: %R\n"
-
-u32 global = 0;
 
 typedef struct {
   u16    offset_low;
@@ -104,6 +102,8 @@ static void* generate_idt(uchar* trampolines, InterruptType type) {
     assert(sizeof(idt[vector]) == 8);
   }
 
+  idt[0xFA].dpl = 0b11;
+
   return idt;
 }
 
@@ -118,7 +118,7 @@ void init_interrupter(InterruptType type) {
 bool auto_eoi_defined = false;
 bool auto_eoi;
 
-void configure_controller(Controller controller, uchar words[]) {
+void configure_controller(Controller controller, const uchar words[]) {
   uchar command_port, data_port;
   
   if (controller == MASTER) {
@@ -145,7 +145,7 @@ void configure_controller(Controller controller, uchar words[]) {
   port_write(data_port,  (uchar) auto_eoi << 1 | 1);
 }
 
-void init_pic8259_master(bool aeoi) {
+void init_pic8259_master(EoiMode aeoi) {
   auto_eoi_defined = true;
   auto_eoi = aeoi;
 
@@ -199,11 +199,6 @@ void delay(u16 n) {
   }
 }
 
-void global_plus() {
-  delay(10);
-  printf("%d ", global++);
-}
-
 void kernel_panic_ctx(interrupt_context* context) {
   kernel_panic(KERNEL_PANIC_CONTEXT_STRING,
         context->vector, context->cs, context->eip, context->eax, context->ebx, context->ecx, context->edx,
@@ -213,12 +208,22 @@ void kernel_panic_ctx(interrupt_context* context) {
       );
 }
 
+u32 global = 0;
+
+u32 global_plus() {
+  return ++global;
+}
+
 void timer_handler(struct interrupt_context* context) {
-  TIMER_20;
+  TIMER_HACK
 }
 
 void keyboard_handler(struct interrupt_context* context) {
-  KEYBOARD_20;
+  
+}
+
+void user_handler(struct interrupt_context* context) {
+  printf("%d ", context->eax);
 }
 
 void universal_handler(interrupt_context* context) {
@@ -228,6 +233,9 @@ void universal_handler(interrupt_context* context) {
       break;
     case 0x21:
       keyboard_handler(context);
+      break;
+    case 0xFA:
+      user_handler(context);
       break;
     default:
       kernel_panic_ctx(context);
