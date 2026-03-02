@@ -6,6 +6,7 @@
 #include "assert.h"
 #include "alloc.h"
 #include "interrupter.h"
+#include "pit.h"
 #include "userspaceu.h"
 #include "userspacetests.h"
 
@@ -28,16 +29,19 @@ void p() {
 }
 
 void user_main() {
-  memmove((void*) vga_clear_screen, (void*) hack, 20);
-  inf_loop();
+  //memmove((void*) vga_clear_screen, (void*) hack, 20);
+  //inf_loop();
 }
 
+typedef struct {
+  int b;
+  short a;
+  short d;
+  int c;
+} Test;
+
 void kernel_main() {
-  void* userspace_stack = malloc_immortal(USERSPACE_STACK_SIZE, 16) + USERSPACE_STACK_SIZE;
-
-  userspace_process(user_main, userspace_stack);
-
-  printf("the end");
+  printf("%d", sizeof(Test));
 }
 
 void kernel_entry() {
@@ -65,4 +69,5 @@ void setup_interrupter(InterruptType type, EoiMode mode) {
   init_interrupter(type);
   init_pic8259_master(mode);
   init_pic8259_slave();
+  init_pit8254();
 }

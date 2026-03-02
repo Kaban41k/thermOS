@@ -5,7 +5,7 @@
 #include "kernelpanic.h"
 #include "alloc.h"
 #include "interrupter.h"
-#include "controllerconf.h"
+#include "picconf.h"
 #include "userspacetests.h"
 
 #define TRAMPOLINE_SIZE     8
@@ -215,7 +215,7 @@ u32 global_plus() {
 }
 
 void timer_handler(struct interrupt_context* context) {
-  TIMER_HACK
+  //TIMER_HACK
 }
 
 void keyboard_handler(struct interrupt_context* context) {
